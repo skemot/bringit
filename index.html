@@ -63,6 +63,35 @@ body {
   overflow-x: hidden;
 }
 
+
+
+<!-- AUTH MODAL -->
+<div id="auth-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:20px;padding:32px;width:90%;max-width:400px;position:relative;">
+    <button onclick="closeAuth()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
+    
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:#2D6A4F;">🍽️ BringIt</div>
+      <div id="auth-title" style="font-size:16px;font-weight:600;margin-top:8px;">Sign in to your account</div>
+      <div id="auth-sub" style="font-size:13px;color:#5A5A7A;margin-top:4px;">Create and manage your events</div>
+    </div>
+
+    <input id="auth-email" type="email" placeholder="Email address" style="width:100%;padding:11px 13px;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:10px;outline:none;" />
+    <input id="auth-password" type="password" placeholder="Password" style="width:100%;padding:11px 13px;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:16px;outline:none;" />
+    
+    <button id="auth-submit-btn" onclick="submitAuth()" style="width:100%;padding:12px;background:#2D6A4F;color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;">Sign In</button>
+    
+    <div id="auth-error" style="color:#C9474D;font-size:13px;text-align:center;margin-top:10px;display:none;"></div>
+    
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:#5A5A7A;">
+      <span id="auth-switch-text">Don't have an account?</span>
+      <button onclick="toggleAuthMode()" id="auth-switch-btn" style="background:none;border:none;color:#2D6A4F;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;">Sign Up</button>
+    </div>
+  </div>
+</div>
+
+
+  
 /* ===================== TOP NAV ===================== */
 .topnav {
   background: var(--white);
@@ -955,7 +984,7 @@ tr:hover td { background: var(--cream); }
     <button class="nav-pill" onclick="showScreen('report')">📊 Report</button>
     <button class="nav-pill" onclick="showScreen('scan')">📱 Guest Scan View</button>
   </div>
-  <button class="nav-cta" onclick="showScreen('organiser')">Create Event →</button>
+  <button class="nav-cta" id="auth-nav-btn" onclick="handleCreateEvent()">Create Event →</button>
 </nav>
 
 <!-- ============================================================ -->
@@ -1530,6 +1559,111 @@ tr:hover td { background: var(--cream); }
 </div>
 
 <script>
+
+// =============================================
+// AUTH
+// =============================================
+let authMode = 'signin' // or 'signup'
+let currentUser = null
+
+// Check auth state on load
+db.auth.onAuthStateChange((event, session) => {
+  currentUser = session?.user || null
+  updateNavForAuth()
+})
+
+function updateNavForAuth() {
+  const authBtn = document.getElementById('auth-nav-btn')
+  if (!authBtn) return
+  if (currentUser) {
+    authBtn.textContent = 'Sign Out'
+    authBtn.onclick = signOut
+  } else {
+    authBtn.textContent = 'Sign In'
+    authBtn.onclick = () => openAuth()
+  }
+}
+
+function openAuth(mode = 'signin') {
+  authMode = mode
+  document.getElementById('auth-modal').style.display = 'flex'
+  document.getElementById('auth-title').textContent = mode === 'signin' ? 'Sign in to your account' : 'Create your account'
+  document.getElementById('auth-submit-btn').textContent = mode === 'signin' ? 'Sign In' : 'Sign Up'
+  document.getElementById('auth-switch-text').textContent = mode === 'signin' ? "Don't have an account?" : 'Already have an account?'
+  document.getElementById('auth-switch-btn').textContent = mode === 'signin' ? 'Sign Up' : 'Sign In'
+  document.getElementById('auth-error').style.display = 'none'
+}
+
+function closeAuth() {
+  document.getElementById('auth-modal').style.display = 'none'
+}
+
+function toggleAuthMode() {
+  openAuth(authMode === 'signin' ? 'signup' : 'signin')
+}
+
+async function submitAuth() {
+  const email    = document.getElementById('auth-email').value.trim()
+  const password = document.getElementById('auth-password').value.trim()
+  const btn      = document.getElementById('auth-submit-btn')
+  const errDiv   = document.getElementById('auth-error')
+
+  if (!email || !password) {
+    showAuthError('Please enter your email and password')
+    return
+  }
+
+  btn.disabled = true
+  btn.textContent = 'Please wait...'
+  errDiv.style.display = 'none'
+
+  let result
+  if (authMode === 'signin') {
+    result = await db.auth.signInWithPassword({ email, password })
+  } else {
+    result = await db.auth.signUp({ email, password })
+  }
+
+  if (result.error) {
+    showAuthError(result.error.message)
+    btn.disabled = false
+    btn.textContent = authMode === 'signin' ? 'Sign In' : 'Sign Up'
+    return
+  }
+
+  closeAuth()
+  if (authMode === 'signup') {
+    alert('Account created! You can now create events.')
+  }
+  showScreen('organiser')
+}
+
+function showAuthError(msg) {
+  const err = document.getElementById('auth-error')
+  err.textContent = msg
+  err.style.display = 'block'
+}
+
+async function signOut() {
+  await db.auth.signOut()
+  currentUser = null
+  updateNavForAuth()
+  showScreen('landing')
+}
+
+
+
+  function handleCreateEvent() {
+  if (currentUser) {
+    showScreen('organiser')
+  } else {
+    openAuth('signup')
+  }
+}
+
+
+
+  
   function showScreen(name) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
@@ -1631,19 +1765,20 @@ tr:hover td { background: var(--cream); }
   console.log('Slug:', slug)
   console.log('Supabase client:', db)
 
-  const result = await db
-    .from('events')
-    .insert({ 
-      name, 
-      event_date: date, 
-      event_time: time,
-      location, 
-      organiser_email: organiserEmail,
-      slug, 
-      is_active: true 
-    })
-    .select()
-    .single()
+const result = await db
+  .from('events')
+  .insert({ 
+    name, 
+    event_date: date, 
+    event_time: time,
+    location,
+    organiser_email: organiserEmail,
+    organiser_id: currentUser?.id || null,
+    slug, 
+    is_active: true 
+  })
+  .select()
+  .single()
 
   console.log('Full result:', JSON.stringify(result))
 
@@ -1748,6 +1883,15 @@ async function scanSubmit() {
     document.querySelectorAll('.scan-item.scan-selected').forEach(i => i.classList.remove('scan-selected'));
     selectedScanItem = null;
   }
+
+
+
+
+
+
+
+
+  
 </script>
 </body>
 </html>
