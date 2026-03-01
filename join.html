@@ -389,9 +389,13 @@ body {
     // Get slug from URL — works for:
     // /join/my-event-slug
     // ?event=my-event-slug
-    const pathParts = window.location.pathname.split('/')
-    const slug = pathParts[pathParts.length - 1] || 
-                 new URLSearchParams(window.location.search).get('event')
+    
+    // const pathParts = window.location.pathname.split('/')
+    // const slug = pathParts[pathParts.length - 1] || 
+    //             new URLSearchParams(window.location.search).get('event')
+
+    const slug = new URLSearchParams(window.location.search).get('event')
+    
 
     if (!slug) {
       showError()
