@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BringIt — Sign Up</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --ink: #1A1A2E;
+  --ink-soft: #5A5A7A;
+  --cream: #FAF7F2;
+  --warm: #F0EBE3;
+  --border: #E0D8CE;
+  --green: #2D6A4F;
+  --green-light: #52B788;
+  --green-pale: #D8F3DC;
+  --rose: #C9474D;
+  --white: #FFFFFF;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+.wrapper {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 0 60px;
+}
+
+/* Loading state */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 16px;
+  color: var(--ink-soft);
+}
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Error state */
+.error-state {
+  display: none;
+  text-align: center;
+  padding: 60px 24px;
+}
+.error-icon { font-size: 48px; margin-bottom: 16px; }
+.error-title {
+  font-family: 'Fraunces', serif;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--rose);
+}
+.error-sub { font-size: 14px; color: var(--ink-soft); }
+
+/* Event hero */
+.event-hero {
+  background: linear-gradient(150deg, var(--green) 0%, #1a3a28 100%);
+  padding: 32px 20px 24px;
+  color: white;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.event-hero::before {
+  content: '';
+  position: absolute;
+  width: 200px; height: 200px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50%;
+  top: -80px; right: -60px;
+}
+.event-emoji { font-size: 40px; margin-bottom: 10px; display: block; }
+.event-name {
+  font-family: 'Fraunces', serif;
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+.event-host { font-size: 13px; opacity: 0.8; margin-bottom: 14px; }
+.event-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  backdrop-filter: blur(4px);
+}
+
+/* Body */
+.body { padding: 20px; }
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+  margin-top: 20px;
+}
+.section-label:first-child { margin-top: 0; }
+
+.name-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 4px;
+}
+.guest-input {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  margin-bottom: 10px;
+  background: var(--cream);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.guest-input:focus { border-color: var(--green); background: white; }
+.guest-input:last-child { margin-bottom: 0; }
+.input-hint { font-size: 11px; color: var(--ink-soft); margin-top: 6px; }
+
+/* Items */
+.items-container { display: flex; flex-direction: column; gap: 10px; }
+
+.category-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 6px 0 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.category-header:first-child { margin-top: 0; }
+
+.item {
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.item:hover:not(.taken) { border-color: var(--green-light); background: var(--green-pale); }
+.item.selected { border-color: var(--green); background: var(--green-pale); }
+.item.taken { opacity: 0.55; cursor: not-allowed; }
+
+.item-check {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  transition: all 0.2s;
+}
+.item.selected .item-check { background: var(--green); border-color: var(--green); color: white; }
+
+.item-info { flex: 1; }
+.item-name { font-size: 14px; font-weight: 600; }
+.item-serves { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.taken-badge {
+  font-size: 11px;
+  background: var(--border);
+  color: var(--ink-soft);
+  padding: 2px 9px;
+  border-radius: 20px;
+}
+
+.no-items {
+  text-align: center;
+  padding: 30px;
+  color: var(--ink-soft);
+  font-size: 14px;
+  background: var(--white);
+  border-radius: 14px;
+  border: 1px dashed var(--border);
+}
+
+/* Submit */
+.submit-btn {
+  width: 100%;
+  padding: 15px;
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 22px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(45,106,79,0.25);
+}
+.submit-btn:hover { background: #1e5038; transform: translateY(-1px); }
+.submit-btn:disabled { background: var(--border); cursor: not-allowed; transform: none; box-shadow: none; }
+
+.footer-note {
+  text-align: center;
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.dot { width: 3px; height: 3px; background: var(--border); border-radius: 50%; }
+
+/* Success */
+.success {
+  display: none;
+  padding: 50px 24px;
+  text-align: center;
+}
+.success-ring {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: var(--green-pale);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin: 0 auto 20px;
+  animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.success-title {
+  font-family: 'Fraunces', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--green);
+  margin-bottom: 8px;
+}
+.success-sub { font-size: 14px; color: var(--ink-soft); margin-bottom: 24px; line-height: 1.6; }
+.success-card {
+  background: var(--green-pale);
+  border: 1.5px solid var(--green-light);
+  border-radius: 14px;
+  padding: 18px;
+  text-align: left;
+}
+.success-card-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.success-item { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.success-detail { font-size: 12px; color: var(--ink-soft); }
+
+/* Powered by */
+.powered-by {
+  text-align: center;
+  margin-top: 30px;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+.powered-by a {
+  color: var(--green);
+  text-decoration: none;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- Loading state -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div>Loading event...</div>
+  </div>
+
+  <!-- Error state -->
+  <div class="error-state" id="error-state">
+    <div class="error-icon">😕</div>
+    <div class="error-title">Event not found</div>
+    <div class="error-sub">This link may have expired or the event doesn't exist.<br>Please check with your organiser.</div>
+  </div>
+
+  <!-- Main form -->
+  <div id="main-form" style="display:none">
+    <div class="event-hero">
+      <span class="event-emoji" id="event-emoji">🍽️</span>
+      <div class="event-name" id="event-name">Loading...</div>
+      <div class="event-host" id="event-host"></div>
+      <div class="event-chip" id="event-chip">📅 Loading...</div>
+    </div>
+
+    <div class="body">
+      <div class="section-label">Your details</div>
+      <div class="name-card">
+        <input class="guest-input" type="text" id="guest-name" placeholder="Your name (required)" />
+        <input class="guest-input" type="email" id="guest-email" placeholder="Email for reminder (optional)" />
+        <div class="input-hint">📧 Enter your email to get a reminder before the event.</div>
+      </div>
+
+      <div class="section-label" style="margin-top:18px">What can you bring? Pick one:</div>
+      <div class="items-container" id="items-container">
+        <!-- Items loaded from Supabase -->
+      </div>
+
+      <button class="submit-btn" id="submit-btn" onclick="submitSignup()">
+        Confirm My Selection ✓
+      </button>
+
+      <div class="footer-note">
+        <span>No account needed</span>
+        <div class="dot"></div>
+        <span>No app download</span>
+        <div class="dot"></div>
+        <span>Free for guests</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success state -->
+  <div class="success" id="success-state">
+    <div class="success-ring">🎉</div>
+    <div class="success-title">You're all set!</div>
+    <div class="success-sub" id="success-sub">Thanks for signing up!<br>We'll see you soon.</div>
+    <div class="success-card">
+      <div class="success-card-label">Your contribution</div>
+      <div class="success-item" id="success-item"></div>
+      <div class="success-detail" id="success-detail"></div>
+    </div>
+    <div class="powered-by">Powered by <a href="https://bringit.app">BringIt</a></div>
+  </div>
+
+</div>
+
+<script>
+  // =============================================
+  // CONFIG — replace with your values
+  // =============================================
+  const SUPABASE_URL = 'https://rucolysccqhtifdkronr.supabase.co'
+  const SUPABASE_ANON_KEY = 'sb_publishable_98jnCXLPnCHo191NM2Yk5Q_gtOLfhB4'
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+  // =============================================
+  // STATE
+  // =============================================
+  let currentEvent = null
+  let selectedItemId = null
+  let selectedItemName = null
+
+  // =============================================
+  // LOAD EVENT FROM URL SLUG
+  // =============================================
+  async function loadEvent() {
+    // Get slug from URL — works for:
+    // /join/my-event-slug
+    // ?event=my-event-slug
+    const pathParts = window.location.pathname.split('/')
+    const slug = pathParts[pathParts.length - 1] || 
+                 new URLSearchParams(window.location.search).get('event')
+
+    if (!slug) {
+      showError()
+      return
+    }
+
+    try {
+      // Load event with its items
+      const { data: event, error } = await db
+        .from('events')
+        .select('*, items(*)')
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .single()
+
+      if (error || !event) {
+        showError()
+        return
+      }
+
+      currentEvent = event
+
+      // Load which items are already taken
+      const { data: signups } = await db
+        .from('signups')
+        .select('item_id')
+        .eq('event_id', event.id)
+
+      const takenIds = new Set(signups?.map(s => s.item_id) || [])
+
+      // Render the page
+      renderEvent(event, takenIds)
+
+    } catch (e) {
+      showError()
+    }
+  }
+
+  // =============================================
+  // RENDER EVENT
+  // =============================================
+  function renderEvent(event, takenIds) {
+    // Update header
+    document.title = event.name + ' — BringIt'
+    document.getElementById('event-name').textContent = event.name
+    document.getElementById('event-host').textContent = event.location || ''
+
+    // Format date nicely
+    let dateStr = ''
+    if (event.event_date) {
+      const d = new Date(event.event_date + 'T00:00:00')
+      dateStr = d.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })
+    }
+    if (event.event_time) {
+      dateStr += ' · ' + formatTime(event.event_time)
+    }
+    if (event.location) {
+      dateStr += ' · ' + event.location
+    }
+    document.getElementById('event-chip').textContent = '📅 ' + dateStr
+
+    // Render items
+    const container = document.getElementById('items-container')
+    container.innerHTML = ''
+
+    // Sort items by sort_order
+    const items = [...event.items].sort((a, b) => a.sort_order - b.sort_order)
+
+    if (items.length === 0) {
+      container.innerHTML = '<div class="no-items">No items added yet. Check back soon!</div>'
+    } else {
+      // Group by category if available
+      const grouped = {}
+      items.forEach(item => {
+        const cat = item.category || 'Items Needed'
+        if (!grouped[cat]) grouped[cat] = []
+        grouped[cat].push(item)
+      })
+
+      Object.entries(grouped).forEach(([category, catItems]) => {
+        // Only show category header if there are multiple categories
+        if (Object.keys(grouped).length > 1) {
+          const header = document.createElement('div')
+          header.className = 'category-header'
+          header.textContent = category
+          container.appendChild(header)
+        }
+
+        catItems.forEach(item => {
+          const taken = takenIds.has(item.id)
+          const div = document.createElement('div')
+          div.className = 'item' + (taken ? ' taken' : '')
+          div.innerHTML = `
+            <div class="item-check">${taken ? '✓' : ''}</div>
+            <div class="item-info">
+              <div class="item-name">${item.name}</div>
+              ${item.serves ? `<div class="item-serves">${item.serves}</div>` : ''}
+            </div>
+            ${taken ? '<span class="taken-badge">Taken</span>' : ''}
+          `
+          if (!taken) {
+            div.addEventListener('click', () => selectItem(div, item))
+          }
+          container.appendChild(div)
+        })
+      })
+    }
+
+    // Show the form
+    document.getElementById('loading').style.display = 'none'
+    document.getElementById('main-form').style.display = 'block'
+  }
+
+  // =============================================
+  // SELECT ITEM
+  // =============================================
+  function selectItem(el, item) {
+    document.querySelectorAll('.item.selected').forEach(i => i.classList.remove('selected'))
+    el.classList.add('selected')
+    selectedItemId = item.id
+    selectedItemName = item.name
+  }
+
+  // =============================================
+  // SUBMIT SIGN-UP
+  // =============================================
+  async function submitSignup() {
+    const name  = document.getElementById('guest-name').value.trim()
+    const email = document.getElementById('guest-email').value.trim()
+    const btn   = document.getElementById('submit-btn')
+
+    // Validate
+    if (!name) {
+      document.getElementById('guest-name').style.borderColor = 'var(--rose)'
+      document.getElementById('guest-name').focus()
+      return
+    }
+    if (!selectedItemId) {
+      alert('Please select an item to bring!')
+      return
+    }
+
+    // Disable button while saving
+    btn.disabled = true
+    btn.textContent = 'Saving...'
+
+    const { error } = await db
+      .from('signups')
+      .insert({
+        item_id:     selectedItemId,
+        event_id:    currentEvent.id,
+        guest_name:  name,
+        guest_email: email || null
+      })
+
+    if (error) {
+      alert('Something went wrong: ' + error.message)
+      btn.disabled = false
+      btn.textContent = 'Confirm My Selection ✓'
+      return
+    }
+
+    // Show success
+    const emailMsg = email ? `A reminder will be sent to ${email} before the event.` : `We'll see you soon!`
+    document.getElementById('success-sub').innerHTML = `Thanks for signing up, ${name}!<br>${emailMsg}`
+    document.getElementById('success-item').textContent = selectedItemName
+    document.getElementById('success-detail').textContent = 
+      document.getElementById('event-chip').textContent.replace('📅 ', '')
+
+    document.getElementById('main-form').style.display = 'none'
+    document.getElementById('success-state').style.display = 'block'
+  }
+
+  // =============================================
+  // HELPERS
+  // =============================================
+  function showError() {
+    document.getElementById('loading').style.display = 'none'
+    document.getElementById('error-state').style.display = 'block'
+  }
+
+  function formatTime(timeStr) {
+    const [h, m] = timeStr.split(':')
+    const hour = parseInt(h)
+    const ampm = hour >= 12 ? 'pm' : 'am'
+    const hour12 = hour % 12 || 12
+    return `${hour12}:${m}${ampm}`
+  }
+
+  // =============================================
+  // START
+  // =============================================
+  loadEvent()
+</script>
+</body>
+</html>
