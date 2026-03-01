@@ -1692,15 +1692,41 @@ tr:hover td { background: var(--cream); }
     selectedScanItem = el.querySelector('.scan-item-name').textContent;
   }
 
-  function scanSubmit() {
-    const name = document.getElementById('scan-name').value.trim();
-    if (!name) { document.getElementById('scan-name').focus(); document.getElementById('scan-name').style.borderColor = 'var(--rose)'; return; }
-    if (!selectedScanItem) { alert('Please select an item to bring!'); return; }
-    document.getElementById('scan-form').style.display = 'none';
-    document.getElementById('confirmed-item-name').textContent = selectedScanItem;
-    const s = document.getElementById('scan-success');
-    s.style.display = 'block';
+
+async function scanSubmit() {
+  const name  = document.getElementById('scan-name').value.trim()
+  const email = document.getElementById('scan-email').value.trim()
+
+  if (!name) {
+    document.getElementById('scan-name').style.borderColor = 'var(--rose)'
+    return
   }
+  if (!selectedScanItem) {
+    alert('Please select an item to bring!')
+    return
+  }
+
+  // Save to Supabase
+  const { error } = await supabase
+    .from('signups')
+    .insert({
+      item_id:     selectedScanItemId,  // we'll add this below
+      event_id:    currentEventId,      // we'll add this below
+      guest_name:  name,
+      guest_email: email || null
+    })
+
+  if (error) { alert('Something went wrong. Please try again.'); return }
+
+  // Show success
+  document.getElementById('scan-form').style.display = 'none'
+  document.getElementById('confirmed-item-name').textContent = selectedScanItem
+  document.getElementById('scan-success').style.display = 'block'
+}
+
+
+
+  
 
   function resetScan() {
     document.getElementById('scan-success').style.display = 'none';
