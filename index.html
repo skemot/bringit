@@ -1614,6 +1614,7 @@ tr:hover td { background: var(--cream); }
   const date     = document.querySelector('input[type="date"]').value
   const time     = document.querySelector('input[type="time"]').value
   const location = document.querySelectorAll('input[type="text"]')[2].value
+  const organiserEmail = document.querySelector('input[type="email"]').value
   
   console.log('Publishing:', { name, date, time, location })
   
@@ -1633,6 +1634,7 @@ tr:hover td { background: var(--cream); }
       event_date: date, 
       event_time: time,
       location, 
+      organiser_email: organiserEmail,
       slug, 
       is_active: true 
     })
