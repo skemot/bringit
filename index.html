@@ -952,7 +952,19 @@ tr:hover td { background: var(--cream); }
 </head>
 <body>
 
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="logo">🍽️ Bring<em>It</em></div>
+  <div class="nav-pills">
+    <button class="nav-pill active" onclick="showScreen('landing')">Home</button>
+    <button class="nav-pill" onclick="showScreen('organiser')">📋 Organiser</button>
+    <button class="nav-pill" onclick="showScreen('report')">📊 Report</button>
+    <button class="nav-pill" onclick="showScreen('scan')">📱 Guest Scan View</button>
+  </div>
+  <button class="nav-cta" id="auth-nav-btn" onclick="handleCreateEvent()">Create Event →</button>
+</nav>
 
+  
 <!-- AUTH MODAL -->
 <div id="auth-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
   <div style="background:white;border-radius:20px;padding:32px;width:90%;max-width:400px;position:relative;">
@@ -979,17 +991,7 @@ tr:hover td { background: var(--cream); }
 </div>
 
   
-<!-- TOP NAV -->
-<nav class="topnav">
-  <div class="logo">🍽️ Bring<em>It</em></div>
-  <div class="nav-pills">
-    <button class="nav-pill active" onclick="showScreen('landing')">Home</button>
-    <button class="nav-pill" onclick="showScreen('organiser')">📋 Organiser</button>
-    <button class="nav-pill" onclick="showScreen('report')">📊 Report</button>
-    <button class="nav-pill" onclick="showScreen('scan')">📱 Guest Scan View</button>
-  </div>
-  <button class="nav-cta" id="auth-nav-btn" onclick="handleCreateEvent()">Create Event →</button>
-</nav>
+
 
 <!-- ============================================================ -->
 <!-- LANDING PAGE                                                -->
