@@ -1708,24 +1708,29 @@ async function scanSubmit() {
     return
   }
 
-  // Save to Supabase
-  const { error } = await supabase
+  // Hardcoded for testing — we'll fix this properly with the join page
+  const eventId = '73222795-c4b7-4621-8264-0fd56cbdef1f'
+  const itemId  = 'd4c9c6c6-9ba3-4fe8-bd8b-460df665b2c6'
+
+  const { data, error } = await db
     .from('signups')
     .insert({
-      item_id:     selectedScanItemId,  // we'll add this below
-      event_id:    currentEventId,      // we'll add this below
+      item_id:     itemId,
+      event_id:    eventId,
       guest_name:  name,
       guest_email: email || null
     })
 
-  if (error) { alert('Something went wrong. Please try again.'); return }
+  if (error) {
+    alert('Error: ' + error.message)
+    return
+  }
 
   // Show success
   document.getElementById('scan-form').style.display = 'none'
   document.getElementById('confirmed-item-name').textContent = selectedScanItem
   document.getElementById('scan-success').style.display = 'block'
 }
-
 
 
   
