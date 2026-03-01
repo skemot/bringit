@@ -65,30 +65,7 @@ body {
 
 
 
-<!-- AUTH MODAL -->
-<div id="auth-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
-  <div style="background:white;border-radius:20px;padding:32px;width:90%;max-width:400px;position:relative;">
-    <button onclick="closeAuth()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
-    
-    <div style="text-align:center;margin-bottom:24px;">
-      <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:#2D6A4F;">🍽️ BringIt</div>
-      <div id="auth-title" style="font-size:16px;font-weight:600;margin-top:8px;">Sign in to your account</div>
-      <div id="auth-sub" style="font-size:13px;color:#5A5A7A;margin-top:4px;">Create and manage your events</div>
-    </div>
 
-    <input id="auth-email" type="email" placeholder="Email address" style="width:100%;padding:11px 13px;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:10px;outline:none;" />
-    <input id="auth-password" type="password" placeholder="Password" style="width:100%;padding:11px 13px;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:16px;outline:none;" />
-    
-    <button id="auth-submit-btn" onclick="submitAuth()" style="width:100%;padding:12px;background:#2D6A4F;color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;">Sign In</button>
-    
-    <div id="auth-error" style="color:#C9474D;font-size:13px;text-align:center;margin-top:10px;display:none;"></div>
-    
-    <div style="text-align:center;margin-top:16px;font-size:13px;color:#5A5A7A;">
-      <span id="auth-switch-text">Don't have an account?</span>
-      <button onclick="toggleAuthMode()" id="auth-switch-btn" style="background:none;border:none;color:#2D6A4F;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;">Sign Up</button>
-    </div>
-  </div>
-</div>
 
 
   
@@ -975,6 +952,33 @@ tr:hover td { background: var(--cream); }
 </head>
 <body>
 
+
+<!-- AUTH MODAL -->
+<div id="auth-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:20px;padding:32px;width:90%;max-width:400px;position:relative;">
+    <button onclick="closeAuth()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
+    
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:#2D6A4F;">🍽️ BringIt</div>
+      <div id="auth-title" style="font-size:16px;font-weight:600;margin-top:8px;">Sign in to your account</div>
+      <div id="auth-sub" style="font-size:13px;color:#5A5A7A;margin-top:4px;">Create and manage your events</div>
+    </div>
+
+    <input id="auth-email" type="email" placeholder="Email address" style="width:100%;padding:11px 13px;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:10px;outline:none;" />
+    <input id="auth-password" type="password" placeholder="Password" style="width:100%;padding:11px 13px;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:16px;outline:none;" />
+    
+    <button id="auth-submit-btn" onclick="submitAuth()" style="width:100%;padding:12px;background:#2D6A4F;color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;">Sign In</button>
+    
+    <div id="auth-error" style="color:#C9474D;font-size:13px;text-align:center;margin-top:10px;display:none;"></div>
+    
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:#5A5A7A;">
+      <span id="auth-switch-text">Don't have an account?</span>
+      <button onclick="toggleAuthMode()" id="auth-switch-btn" style="background:none;border:none;color:#2D6A4F;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;">Sign Up</button>
+    </div>
+  </div>
+</div>
+
+  
 <!-- TOP NAV -->
 <nav class="topnav">
   <div class="logo">🍽️ Bring<em>It</em></div>
