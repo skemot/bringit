@@ -1607,43 +1607,58 @@ tr:hover td { background: var(--cream); }
   });
 
   // Publish
-async function publishEvent() {
+  async function publishEvent() {
   const name     = document.querySelector('input[placeholder*="Potluck"]').value
   const date     = document.querySelector('input[type="date"]').value
   const time     = document.querySelector('input[type="time"]').value
   const location = document.querySelectorAll('input[type="text"]')[2].value
-  const email    = document.querySelector('input[type="email"]').value
-
+  
+  console.log('Publishing:', { name, date, time, location })
+  
   if (!name) { alert('Please add an event name'); return }
 
-  // Create a URL-friendly slug from the event name + date
   const slug = name.toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '') + '-' + date
 
-  // Save the event
-  const { data: event, error } = await supabase
+  console.log('Slug:', slug)
+  console.log('Supabase client:', db)
+
+  const result = await db
     .from('events')
-    .insert({ name, event_date: date, event_time: time,
-               location, slug, is_active: true })
-    .select().single()
+    .insert({ 
+      name, 
+      event_date: date, 
+      event_time: time,
+      location, 
+      slug, 
+      is_active: true 
+    })
+    .select()
+    .single()
 
-  if (error) { alert('Error: ' + error.message); return }
+  console.log('Full result:', JSON.stringify(result))
 
-  // Save all the items
+  if (result.error) {
+    alert('Error saving: ' + result.error.message + ' | Code: ' + result.error.code)
+    return
+  }
+
+  // Save items
   const itemRows = document.querySelectorAll('#items-list .item-row')
+  console.log('Item rows found:', itemRows.length)
+  
   const items = [...itemRows].map((row, i) => ({
-    event_id:   event.id,
+    event_id:   result.data.id,
     name:       row.querySelector('.item-name').textContent.replace(/^[^\w]+/, '').trim(),
     serves:     row.querySelector('.item-serves').textContent,
     sort_order: i
   }))
 
-  await supabase.from('items').insert(items)
+  console.log('Items to insert:', items)
 
-  // Update QR code URL
-  const liveUrl = `https://bringit.app/join/${slug}`
-  document.getElementById('share-link').textContent = liveUrl
+  const itemsResult = await db.from('items').insert(items)
+  console.log('Items result:', JSON.stringify(itemsResult))
 
   // Show success
   const area = document.getElementById('notif-area')
@@ -1653,6 +1668,17 @@ async function publishEvent() {
   </div>`
   setTimeout(() => area.innerHTML = '', 6000)
 }
+
+  
+
+
+
+
+
+
+
+
+  
   
 
   // Scan / Guest view
