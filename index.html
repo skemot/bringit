@@ -1752,7 +1752,6 @@ async function signOut() {
 
   // Publish
   async function publishEvent() {
-  alert('Function called!')
     
   const name     = document.querySelector('input[placeholder*="Potluck"]').value
   const date     = document.querySelector('input[type="date"]').value
@@ -1808,6 +1807,24 @@ const result = await db
 
   const itemsResult = await db.from('items').insert(items)
   console.log('Items result:', JSON.stringify(itemsResult))
+
+
+  // Update QR code and share link with real URL
+  const liveUrl = `https://bringit-dwhem3ys1-skemots-projects.vercel.app//join.html?event=${slug}`
+  document.getElementById('share-link').textContent = liveUrl
+  
+  // Regenerate QR code with real URL
+  const qrContainer = document.getElementById('qr-code-container')
+  qrContainer.innerHTML = ''
+  new QRCode(qrContainer, {
+    text: liveUrl,
+    width: 130,
+    height: 130,
+    colorDark: '#1A1A2E',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  })
+    
 
   // Show success
   const area = document.getElementById('notif-area')
