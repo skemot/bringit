@@ -1172,7 +1172,7 @@ tr:hover td { background: var(--cream); }
           <li>Organiser notifications</li>
           <li class="no">Custom branding</li>
         </ul>
-        <button class="btn-plan primary" onclick="showScreen('organiser')">Start 14-day free trial</button>
+        <button class="btn-plan primary" onclick="subscribe('starter')">Start 14-day free trial</button>
       </div>
 
       <!-- Pro -->
@@ -1189,7 +1189,7 @@ tr:hover td { background: var(--cream); }
           <li>White-label guest pages</li>
           <li>API access (coming soon)</li>
         </ul>
-        <button class="btn-plan" onclick="showScreen('organiser')">Start 14-day free trial</button>
+        <button class="btn-plan primary" onclick="subscribe('pro')">Start 14-day free trial</button>
       </div>
     </div>
 
@@ -1669,6 +1669,61 @@ async function signOut() {
 
 
 
+// =============================================
+// STRIPE
+// =============================================
+const PLANS = {
+  starter: 'price_1T6Lh8HQ4z1rpggpijPjprkj',
+  pro:     'price_1T6LhSHQ4z1rpggpUq47Su5S'
+}
+
+async function subscribe(plan) {
+  if (!currentUser) {
+    openAuth('signup')
+    return
+  }
+
+  const btn = event.target
+  btn.disabled = true
+  btn.textContent = 'Loading...'
+
+  try {
+    const { data, error } = await db.functions.invoke('create-checkout', {
+      body: {
+        priceId:       PLANS[plan],
+        customerEmail: currentUser.email,
+        successUrl:    window.location.origin + '?subscribed=true',
+        cancelUrl:     window.location.origin
+      }
+    })
+
+    if (error) throw error
+    if (data?.url) window.location.href = data.url
+
+  } catch (err) {
+    alert('Error: ' + err.message)
+    btn.disabled = false
+    btn.textContent = plan === 'starter' ? 'Start 14-day free trial' : 'Start 14-day free trial'
+  }
+}
+
+// Check if returning from successful payment
+window.addEventListener('load', () => {
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('subscribed') === 'true') {
+    alert('🎉 Welcome to BringIt! Your subscription is active.')
+    // Clean up URL
+    window.history.replaceState({}, '', window.location.pathname)
+  }
+})
+
+
+
+
+  
+
+
+  
   
   function showScreen(name) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
