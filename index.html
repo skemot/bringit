@@ -1705,6 +1705,9 @@ const response = await fetch(
   }
 )
 const data = await response.json()
+  
+  console.log('Stripe response:', JSON.stringify(data))
+    
 if (data?.url) window.location.href = data.url
 
   } catch (err) {
