@@ -1294,6 +1294,7 @@ tr:hover td { background: var(--cream); }
     <div class="add-row">
       <input type="text" id="item-name-input" placeholder="Item name (e.g. Potato Salad)" />
       <input type="text" id="item-serves-input" placeholder="Serves / qty (e.g. 8)" />
+      <input id="item-qty-input" type="number" min="1" value="1" placeholder="Qty" style="width:70px;" class="input-field" />
       <button class="btn btn-primary" onclick="addItem()">+ Add</button>
     </div>
   </div>
@@ -1793,21 +1794,69 @@ window.addEventListener('load', () => {
 
   // Add item
   function addItem() {
-    const name = document.getElementById('item-name-input');
-    const serves = document.getElementById('item-serves-input');
-    if (!name.value.trim()) { name.focus(); return; }
-    const servesText = serves.value.trim() ? 'Serves ' + serves.value.trim() : 'Qty TBC';
-    const row = document.createElement('div');
-    row.className = 'item-row';
-    row.innerHTML = `
-      <span class="item-name">🍽️ ${name.value.trim()}</span>
-      <span class="item-serves">${servesText}</span>
-      <span class="item-status status-open">Open</span>
-      <button class="btn btn-danger" onclick="this.closest('.item-row').remove()">Remove</button>
-    `;
-    document.getElementById('items-list').appendChild(row);
-    name.value = ''; serves.value = '';
+  const name   = document.getElementById('item-name-input')
+  const serves = document.getElementById('item-serves-input')
+  const qty    = document.getElementById('item-qty-input')
+  if (!name.value.trim()) { name.focus(); return; }
+
+  const servesText = serves.value.trim() ? 'Serves ' + serves.value.trim() : 'Qty TBC'
+  const qtyVal = parseInt(qty?.value) || 1
+
+  const row = document.createElement('div')
+  row.className = 'item-row'
+  row.innerHTML = `
+    <span class="item-name" onclick="editItemField(this)" title="Click to edit">🍽️ ${name.value.trim()}</span>
+    <span class="item-serves" onclick="editItemField(this)" title="Click to edit">${servesText}</span>
+    <span class="item-qty" onclick="editItemField(this)" title="Click to edit × ${qtyVal}">×${qtyVal}</span>
+    <span class="item-status status-open">Open</span>
+    <button class="btn btn-danger" onclick="this.closest('.item-row').remove()">Remove</button>
+  `
+  document.getElementById('items-list').appendChild(row)
+  name.value = ''; serves.value = ''; if (qty) qty.value = '1';
+}
+
+function editItemField(el) {
+  if (el.querySelector('input')) return
+
+  const original = el.textContent.trim()
+  const isName   = el.classList.contains('item-name')
+  const isQty    = el.classList.contains('item-qty')
+
+  let displayValue
+  if (isName) displayValue = original.replace(/^[^\w]+/, '').trim()
+  else if (isQty) displayValue = original.replace('×', '').trim()
+  else displayValue = original
+
+  el.innerHTML = `<input 
+    type="${isQty ? 'number' : 'text'}"
+    min="1"
+    value="${displayValue}"
+    style="width:100%;border:1.5px solid var(--green);border-radius:6px;padding:3px 7px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;"
+    onblur="saveItemField(this, '${isName ? 'name' : isQty ? 'qty' : 'serves'}')"
+    onkeydown="if(event.key==='Enter'||event.key==='Escape') this.blur()"
+  />`
+
+  const input = el.querySelector('input')
+  input.focus()
+  input.select()
+}
+
+function saveItemField(input, type) {
+  const el = input.parentElement
+  const value = input.value.trim()
+
+  if (type === 'name') {
+    el.textContent = value ? '🍽️ ' + value : '🍽️ Unnamed item'
+  } else if (type === 'qty') {
+    const n = parseInt(value) || 1
+    el.textContent = '×' + n
+  } else {
+    el.textContent = value ? 'Serves ' + value : 'Qty TBC'
   }
+
+  el.onclick = () => editItemField(el)
+  el.title = 'Click to edit'
+}
   document.addEventListener('DOMContentLoaded', () => {
     ['item-name-input','item-serves-input'].forEach(id => {
       const el = document.getElementById(id);
@@ -1865,6 +1914,7 @@ const result = await db
     event_id:   result.data.id,
     name:       row.querySelector('.item-name').textContent.replace(/^[^\w]+/, '').trim(),
     serves:     row.querySelector('.item-serves').textContent,
+    quantity:   parseInt(row.querySelector('.item-qty')?.textContent?.replace('×','')) || 1,
     sort_order: i
   }))
 
