@@ -1251,7 +1251,7 @@ tr:hover td { background: var(--cream); }
       </div>
       <div class="form-group">
         <label>Your Email (for notifications)</label>
-        <input type="email" placeholder="organiser@email.com" />
+        <input type="email" id="organiser-email-input" placeholder="organiser@email.com" />
       </div>
     </div>
   </div>
@@ -1871,7 +1871,7 @@ function saveItemField(input, type) {
   const date     = document.querySelector('input[type="date"]').value
   const time     = document.querySelector('input[type="time"]').value
   const location = document.querySelectorAll('input[type="text"]')[2].value
-  const organiserEmail = document.querySelector('input[type="email"]').value
+  const organiserEmail = document.getElementById('organiser-email-input').value
   
   console.log('Publishing:', { name, date, time, location })
   
