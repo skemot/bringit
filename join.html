@@ -427,7 +427,7 @@ body {
       const takenIds = new Set(signups?.map(s => s.item_id) || [])
 
       // Render the page
-      renderEvent(event, takenIds)
+      renderEvent(event, takenIds, signups || [])
 
     } catch (e) {
       showError()
@@ -437,7 +437,7 @@ body {
   // =============================================
   // RENDER EVENT
   // =============================================
-  function renderEvent(event, takenIds) {
+  function renderEvent(event, takenIds, signups) {
     // Update header
     document.title = event.name + ' — BringIt'
     document.getElementById('event-name').textContent = event.name
