@@ -485,18 +485,23 @@ body {
         }
 
         catItems.forEach(item => {
-          const taken = takenIds.has(item.id)
+          const qty = item.quantity || 1
+          const takenCount = signups?.filter(s => s.item_id === item.id).length || 0
+          const remaining = qty - takenCount
+          const fullyTaken = remaining <= 0
+        
           const div = document.createElement('div')
-          div.className = 'item' + (taken ? ' taken' : '')
+          div.className = 'item' + (fullyTaken ? ' taken' : '')
           div.innerHTML = `
-            <div class="item-check">${taken ? '✓' : ''}</div>
+            <div class="item-check">${fullyTaken ? '✓' : ''}</div>
             <div class="item-info">
               <div class="item-name">${item.name}</div>
               ${item.serves ? `<div class="item-serves">${item.serves}</div>` : ''}
+              ${qty > 1 ? `<div class="item-serves">${remaining} of ${qty} spots remaining</div>` : ''}
             </div>
-            ${taken ? '<span class="taken-badge">Taken</span>' : ''}
+            ${fullyTaken ? '<span class="taken-badge">Taken</span>' : ''}
           `
-          if (!taken) {
+          if (!fullyTaken) {
             div.addEventListener('click', () => selectItem(div, item))
           }
           container.appendChild(div)
