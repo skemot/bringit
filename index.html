@@ -990,6 +990,23 @@ tr:hover td { background: var(--cream); }
   </div>
 </div>
 
+
+
+  <!-- UPGRADE MODAL -->
+<div id="upgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:20px;padding:32px;width:90%;max-width:400px;position:relative;text-align:center;">
+    <button onclick="closeUpgrade()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
+    <div style="font-size:40px;margin-bottom:16px;">⚡</div>
+    <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:700;margin-bottom:10px;">Upgrade to continue</div>
+    <div id="upgrade-message" style="font-size:14px;color:#5A5A7A;margin-bottom:24px;line-height:1.6;"></div>
+    <button onclick="closeUpgrade();subscribe('starter')" style="width:100%;padding:12px;background:#2D6A4F;color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px;">
+      Upgrade to Starter — $4/mo
+    </button>
+    <button onclick="closeUpgrade();subscribe('pro')" style="width:100%;padding:12px;background:white;color:#2D6A4F;border:2px solid #2D6A4F;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;">
+      Upgrade to Pro — $9/mo
+    </button>
+  </div>
+</div>
   
 
 
@@ -1211,6 +1228,10 @@ tr:hover td { background: var(--cream); }
   </div>
 
   <div id="notif-area"></div>
+
+  <div id="plan-badge" style="display:inline-flex;align-items:center;gap:6px;background:#D8F3DC;color:#2D6A4F;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:16px;">
+    ⭐ Free Plan
+  </div>
 
   <!-- Event type -->
   <div class="card">
@@ -1577,6 +1598,7 @@ let currentUser = null
 db.auth.onAuthStateChange((event, session) => {
   currentUser = session?.user || null
   updateNavForAuth()
+  if (currentUser) updatePlanBadge()
 })
 
 function updateNavForAuth() {
@@ -1660,14 +1682,71 @@ async function signOut() {
 
 
 
-  function handleCreateEvent() {
-  if (currentUser) {
-    showScreen('organiser')
-  } else {
+async function handleCreateEvent() {
+  if (!currentUser) {
     openAuth('signup')
+    return
+  }
+  const canCreate = await checkCanCreateEvent()
+  if (canCreate) showScreen('organiser')
+}
+
+
+
+// =============================================
+// PLAN LIMITS
+// =============================================
+async function getUserPlan() {
+  if (!currentUser) return null
+  const { data } = await db
+    .from('profiles')
+    .select('plan, events_this_month, subscription_status')
+    .eq('id', currentUser.id)
+    .single()
+  return data
+}
+
+async function checkCanCreateEvent() {
+  const profile = await getUserPlan()
+  if (!profile) return true
+  if (profile.plan === 'free' && profile.events_this_month >= 1) {
+    showUpgradePrompt('You\'ve used your free event this month. Upgrade to create unlimited events.')
+    return false
+  }
+  return true
+}
+
+function showUpgradePrompt(message) {
+  document.getElementById('upgrade-message').textContent = message
+  document.getElementById('upgrade-modal').style.display = 'flex'
+}
+
+function closeUpgrade() {
+  document.getElementById('upgrade-modal').style.display = 'none'
+}
+
+async function updatePlanBadge() {
+  const profile = await getUserPlan()
+  if (!profile) return
+  const badge = document.getElementById('plan-badge')
+  if (!badge) return
+  if (profile.plan === 'free') {
+    badge.innerHTML = `⭐ Free Plan · ${profile.events_this_month}/1 events this month · <a onclick="showScreen('landing')" style="cursor:pointer;text-decoration:underline;">Upgrade</a>`
+    badge.style.background = '#D8F3DC'
+    badge.style.color = '#2D6A4F'
+  } else if (profile.plan === 'starter') {
+    badge.innerHTML = `🚀 Starter Plan — unlimited events`
+    badge.style.background = '#E0E7FF'
+    badge.style.color = '#3A5BC7'
+  } else if (profile.plan === 'pro') {
+    badge.innerHTML = `💎 Pro Plan — unlimited everything`
+    badge.style.background = '#F0E6FA'
+    badge.style.color = '#7B4F9E'
   }
 }
 
+
+  
 
 
 // =============================================
