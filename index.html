@@ -1904,7 +1904,7 @@ function editItemField(el) {
   let displayValue
   if (isName) displayValue = original.replace(/^[^\w]+/, '').trim()
   else if (isQty) displayValue = original.replace('×', '').trim()
-  else displayValue = original
+  else displayValue = original.replace(/^Serves\s*/i, '').trim()
 
   el.innerHTML = `<input 
     type="${isQty ? 'number' : 'text'}"
