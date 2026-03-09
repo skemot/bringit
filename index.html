@@ -898,6 +898,24 @@ tr:hover td { background: var(--cream); }
 }
 .scan-footer-dot { width: 3px; height: 3px; background: var(--border); border-radius: 50%; }
 
+.report-event-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.report-event-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.report-event-header:hover { background: var(--cream); }
+
+
 /* Success screen */
 .scan-success {
   display: none;
@@ -948,6 +966,9 @@ tr:hover td { background: var(--cream); }
   .how-grid { grid-template-columns: 1fr; }
   .usecases-grid { grid-template-columns: 1fr; }
 }
+
+  
+  
 </style>
 </head>
 <body>
@@ -1392,7 +1413,46 @@ tr:hover td { background: var(--cream); }
 <!-- ============================================================ -->
 <!-- REPORT SCREEN                                               -->
 <!-- ============================================================ -->
-<div class="screen" id="screen-report">
+
+  <div class="screen" id="screen-report">
+  <div style="max-width:1060px;margin:0 auto;padding:32px 24px 60px;">
+    <div class="page-header">
+      <div class="page-title">My Events</div>
+      <div class="page-subtitle">Track your active events and view past ones.</div>
+    </div>
+
+    <!-- Search -->
+    <div style="margin-bottom:24px;">
+      <input 
+        id="report-search" 
+        type="text" 
+        placeholder="🔍 Search events..." 
+        oninput="loadReportDashboard()"
+        style="width:100%;padding:11px 16px;border:1.5px solid var(--border);border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;background:white;"
+      />
+    </div>
+
+    <!-- Active Events -->
+    <div style="margin-bottom:32px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--ink-soft);margin-bottom:12px;">📅 Active Events</div>
+      <div id="active-events-container">
+        <div style="text-align:center;padding:40px;color:var(--ink-soft);">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Past Events -->
+    <div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--ink-soft);margin-bottom:12px;">📦 Past Events</div>
+      <div id="past-events-container" style="background:white;border:1px solid var(--border);border-radius:14px;overflow:hidden;">
+        <div style="text-align:center;padding:20px;color:var(--ink-soft);font-size:13px;">Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+  
+  
+  <!-- OLD REPORT HTML
+  <div class="screen" id="screen-report">
   <div style="max-width:1060px;margin:0 auto;padding:32px 24px 60px;">
 
   <div class="page-header">
@@ -1458,7 +1518,7 @@ tr:hover td { background: var(--cream); }
   </div>
 
   </div>
-</div>
+</div> -->
 
 <!-- ============================================================ -->
 <!-- GUEST SCAN EXPERIENCE                                       -->
@@ -1819,8 +1879,202 @@ window.addEventListener('load', () => {
 })
 
 
+  // =============================================
+// REPORT DASHBOARD
+// =============================================
+let reportCurrentPage = 1
+const EVENTS_PER_PAGE = 10
+
+async function loadReportDashboard() {
+  if (!currentUser) return
+
+  const searchEl = document.getElementById('report-search')
+  const search = searchEl?.value.toLowerCase() || ''
+
+  // Load all organiser's events with signup counts
+  const { data: events, error } = await db
+    .from('events')
+    .select(`
+      *,
+      items(id, name, serves, quantity, category),
+      signups(id, item_id, guest_name, guest_email)
+    `)
+    .eq('organiser_id', currentUser.id)
+    .order('event_date', { ascending: true })
+
+  if (error) {
+    console.error('Error loading events:', error)
+    return
+  }
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  // Split into active and past
+  let active = events.filter(e => e.is_active && new Date(e.event_date) >= today)
+  let past   = events.filter(e => !e.is_active || new Date(e.event_date) < today)
+    .reverse()
+
+  // Apply search filter
+  if (search) {
+    active = active.filter(e => e.name.toLowerCase().includes(search))
+    past   = past.filter(e => e.name.toLowerCase().includes(search))
+  }
+
+  renderActiveEvents(active)
+  renderPastEvents(past)
+}
+
+function renderActiveEvents(events) {
+  const container = document.getElementById('active-events-container')
+  container.innerHTML = ''
+
+  if (events.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:40px;color:var(--ink-soft);">
+        <div style="font-size:40px;margin-bottom:12px;">📅</div>
+        <div style="font-weight:600;margin-bottom:6px;">No active events</div>
+        <div style="font-size:13px;">Create your first event to get started</div>
+        <button class="btn btn-primary" style="margin-top:16px;" onclick="handleCreateEvent()">+ Create Event</button>
+      </div>`
+    return
+  }
+
+  events.forEach(event => {
+    const totalItems = event.items?.length || 0
+    const takenItems = event.items?.filter(item => {
+      const qty = item.quantity || 1
+      const taken = event.signups?.filter(s => s.item_id === item.id).length || 0
+      return taken >= qty
+    }).length || 0
+    const totalGuests = event.signups?.length || 0
+    const pct = totalItems > 0 ? Math.round((takenItems / totalItems) * 100) : 0
+    const eventDate = new Date(event.event_date + 'T00:00:00')
+    const dateStr = eventDate.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+    const joinUrl = `https://bringit-alpha.vercel.app/join.html?event=${event.slug}`
+
+    const card = document.createElement('div')
+    card.className = 'report-event-card'
+    card.innerHTML = `
+      <div class="report-event-header" onclick="toggleEventDetail('detail-${event.id}', this)">
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:16px;margin-bottom:4px;">${event.name}</div>
+          <div style="font-size:13px;color:var(--ink-soft);">📅 ${dateStr}${event.location ? ' · 📍 ' + event.location : ''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+          <div style="text-align:center;">
+            <div style="font-size:18px;font-weight:700;color:var(--green)">${takenItems}/${totalItems}</div>
+            <div style="font-size:11px;color:var(--ink-soft);">items claimed</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:18px;font-weight:700;color:var(--blue)">${totalGuests}</div>
+            <div style="font-size:11px;color:var(--ink-soft);">guests</div>
+          </div>
+          <div style="font-size:20px;transition:transform 0.2s;" class="expand-arrow">▾</div>
+        </div>
+      </div>
+      <div style="padding:0 16px 4px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);margin-bottom:4px;">
+          <span>Progress</span><span style="font-weight:600;color:var(--green)">${pct}%</span>
+        </div>
+        <div style="background:var(--border);border-radius:99px;height:6px;">
+          <div style="background:var(--green);border-radius:99px;height:6px;width:${pct}%;transition:width 0.5s;"></div>
+        </div>
+      </div>
+      <div style="padding:8px 16px 12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" onclick="copyShareLink('${joinUrl}', this)">🔗 Copy link</button>
+        <button class="btn btn-secondary btn-sm" onclick="showQrModal('${joinUrl}', '${event.name}')">📱 QR Code</button>
+      </div>
+      <div id="detail-${event.id}" style="display:none;border-top:1px solid var(--border);padding:16px;">
+        ${renderEventDetail(event)}
+      </div>
+    `
+    container.appendChild(card)
+  })
+}
+
+function renderPastEvents(events) {
+  const container = document.getElementById('past-events-container')
+  container.innerHTML = ''
+
+  if (events.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--ink-soft);font-size:13px;">No past events yet</div>`
+    return
+  }
+
+  events.forEach(event => {
+    const eventDate = new Date(event.event_date + 'T00:00:00')
+    const dateStr = eventDate.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
+    const card = document.createElement('div')
+    card.style.cssText = 'padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;'
+    card.innerHTML = `
+      <div>
+        <div style="font-weight:600;font-size:14px;">${event.name}</div>
+        <div style="font-size:12px;color:var(--ink-soft);">📅 ${dateStr}</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="useAsTemplate(${JSON.stringify(event).replace(/"/g, '&quot;')})">Use as template</button>
+    `
+    container.appendChild(card)
+  })
+}
+
+function renderEventDetail(event) {
+  const itemRows = event.items?.map(item => {
+    const qty = item.quantity || 1
+    const signups = event.signups?.filter(s => s.item_id === item.id) || []
+    const taken = signups.length
+    const remaining = qty - taken
+    const fullyTaken = remaining <= 0
+    const guestNames = signups.map(s => s.guest_name).join(', ') || 'No one yet'
+    return `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-size:14px;font-weight:600;">${item.name}</div>
+          <div style="font-size:12px;color:var(--ink-soft);">${guestNames}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          ${fullyTaken 
+            ? `<span style="background:var(--green-pale);color:var(--green);padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;">✓ Taken</span>`
+            : `<span style="background:var(--amber-pale);color:var(--amber);padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;">${remaining} of ${qty} needed</span>`
+          }
+        </div>
+      </div>
+    `
+  }).join('') || '<div style="color:var(--ink-soft);font-size:13px;">No items added</div>'
+
+  return `<div>${itemRows}</div>`
+}
+
+function toggleEventDetail(id, header) {
+  const detail = document.getElementById(id)
+  const arrow = header.querySelector('.expand-arrow')
+  const isOpen = detail.style.display !== 'none'
+  detail.style.display = isOpen ? 'none' : 'block'
+  arrow.style.transform = isOpen ? '' : 'rotate(180deg)'
+}
+
+async function copyShareLink(url, btn) {
+  await navigator.clipboard.writeText(url)
+  const original = btn.textContent
+  btn.textContent = '✓ Copied!'
+  setTimeout(() => btn.textContent = original, 2000)
+}
+
+function showQrModal(url, eventName) {
+  // We'll add this shortly
+  alert('QR for: ' + url)
+}
+
+function useAsTemplate(event) {
+  // We'll build this when we do past events
+  alert('Coming soon!')
+}
 
 
+
+
+
+  
   
 
 
@@ -1833,6 +2087,7 @@ window.addEventListener('load', () => {
     const map = { landing: 0, organiser: 1, report: 2, scan: 3 };
     document.querySelectorAll('.nav-pill')[map[name]].classList.add('active');
     window.scrollTo(0, 0);
+    if (name === 'report') loadReportDashboard();
   }
 
   // QR Code
