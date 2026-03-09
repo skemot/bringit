@@ -1899,7 +1899,8 @@ window.addEventListener('load', () => {
   row.innerHTML = `
     <span class="item-name" onclick="editItemField(this)" title="Click to edit">🍽️ ${name.value.trim()}</span>
     <span class="item-serves" onclick="editItemField(this)" title="Click to edit">${servesText}</span>
-    <span class="item-qty" onclick="editItemField(this)" title="Click to edit × ${qtyVal}">×${qtyVal}</span>
+    <span class="item-qty" onclick="editItemField(this)" title="Click to edit">×${qtyVal}</span>
+    <span class="item-category" onclick="editCategoryField(this)" title="Click to edit" style="font-size:12px;padding:3px 10px;border-radius:20px;background:var(--warm);color:var(--ink-soft);cursor:pointer;">${category || 'No category'}</span>
     <span class="item-status status-open">Open</span>
     <button class="btn btn-danger" onclick="this.closest('.item-row').remove()">Remove</button>
   `
@@ -1957,6 +1958,43 @@ function saveItemField(input, type) {
       if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') addItem(); });
     });
   });
+
+  function editCategoryField(el) {
+  if (el.querySelector('select')) return
+  const current = el.textContent.trim()
+  el.innerHTML = `
+    <select 
+      onchange="saveCategoryField(this)"
+      onblur="saveCategoryField(this)"
+      style="border:1.5px solid var(--green);border-radius:6px;padding:3px 7px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;">
+      <option value="">No category</option>
+      <option value="Mains" ${current==='Mains'?'selected':''}>🍗 Mains</option>
+      <option value="Salads" ${current==='Salads'?'selected':''}>🥗 Salads</option>
+      <option value="Bread" ${current==='Bread'?'selected':''}>🍞 Bread</option>
+      <option value="Desserts" ${current==='Desserts'?'selected':''}>🍰 Desserts</option>
+      <option value="Drinks" ${current==='Drinks'?'selected':''}>🥤 Drinks</option>
+      <option value="Snacks" ${current==='Snacks'?'selected':''}>🧀 Snacks</option>
+      <option value="Other" ${current==='Other'?'selected':''}>📦 Other</option>
+    </select>
+  `
+  el.querySelector('select').focus()
+}
+
+function saveCategoryField(select) {
+  const el = select.parentElement
+  const value = select.value
+  el.textContent = value || 'No category'
+  el.onclick = () => editCategoryField(el)
+  el.title = 'Click to edit'
+  el.dataset && (el.closest('.item-row').dataset.category = value)
+}
+
+
+
+
+
+
+  
 
   // Publish
   async function publishEvent() {
