@@ -1941,12 +1941,11 @@ function renderActiveEvents(events) {
   }
 
   events.forEach(event => {
-    const totalItems = event.items?.length || 0
-    const takenItems = event.items?.filter(item => {
-      const qty = item.quantity || 1
+    const totalItems = event.items?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0
+    const takenItems = event.items?.reduce((sum, item) => {
       const taken = event.signups?.filter(s => s.item_id === item.id).length || 0
-      return taken >= qty
-    }).length || 0
+      return sum + Math.min(taken, item.quantity || 1)
+    }, 0) || 0
     const totalGuests = event.signups?.length || 0
     const pct = totalItems > 0 ? Math.round((takenItems / totalItems) * 100) : 0
     const eventDate = new Date(event.event_date + 'T00:00:00')
