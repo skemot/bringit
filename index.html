@@ -1316,6 +1316,16 @@ tr:hover td { background: var(--cream); }
       <input type="text" id="item-name-input" placeholder="Item name (e.g. Potato Salad)" />
       <input type="text" id="item-serves-input" placeholder="Serves / qty (e.g. 8)" />
       <input id="item-qty-input" type="number" min="1" value="1" placeholder="Qty" style="width:70px;" class="input-field" />
+      <select id="item-category-input" class="input-field" style="min-width:120px;">
+        <option value="">No category</option>
+        <option value="Mains">🍗 Mains</option>
+        <option value="Salads">🥗 Salads</option>
+        <option value="Bread">🍞 Bread</option>
+        <option value="Desserts">🍰 Desserts</option>
+        <option value="Drinks">🥤 Drinks</option>
+        <option value="Snacks">🧀 Snacks</option>
+        <option value="Other">📦 Other</option>
+      </select>
       <button class="btn btn-primary" onclick="addItem()">+ Add</button>
     </div>
   </div>
@@ -1880,9 +1890,11 @@ window.addEventListener('load', () => {
 
   const servesText = serves.value.trim() ? 'Serves ' + serves.value.trim() : 'Qty TBC'
   const qtyVal = parseInt(qty?.value) || 1
+  const category = document.getElementById('item-category-input').value
 
   const row = document.createElement('div')
   row.className = 'item-row'
+  row.dataset.category = category
   row.innerHTML = `
     <span class="item-name" onclick="editItemField(this)" title="Click to edit">🍽️ ${name.value.trim()}</span>
     <span class="item-serves" onclick="editItemField(this)" title="Click to edit">${servesText}</span>
@@ -1890,8 +1902,10 @@ window.addEventListener('load', () => {
     <span class="item-status status-open">Open</span>
     <button class="btn btn-danger" onclick="this.closest('.item-row').remove()">Remove</button>
   `
+    
   document.getElementById('items-list').appendChild(row)
   name.value = ''; serves.value = ''; if (qty) qty.value = '1';
+  document.getElementById('item-category-input').value = ''
 }
 
 function editItemField(el) {
@@ -1994,6 +2008,7 @@ const result = await db
     name:       row.querySelector('.item-name').textContent.replace(/^[^\w]+/, '').trim(),
     serves:     row.querySelector('.item-serves').textContent,
     quantity:   parseInt(row.querySelector('.item-qty')?.textContent?.replace('×','')) || 1,
+    category:   row.dataset.category || null,
     sort_order: i
   }))
 
