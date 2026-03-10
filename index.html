@@ -2034,7 +2034,11 @@ function renderEventDetail(event) {
         <div style="text-align:right;flex-shrink:0;">
           ${fullyTaken 
             ? `<span style="background:var(--green-pale);color:var(--green);padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;">✓ Taken</span>`
-            : `<span style="background:var(--amber-pale);color:var(--amber);padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;">${remaining} of ${qty} needed</span>`
+            : qty === 1
+              ? `<span style="background:var(--rose-pale);color:var(--rose);padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;">1 needed</span>`
+              : taken === 0
+                ? `<span style="background:var(--rose-pale);color:var(--rose);padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;">${remaining} of ${qty} needed</span>`
+                : `<span style="background:var(--amber-pale);color:var(--amber);padding:2px 10px;border-radius:20px;font-size:12px;font-weight:600;">${remaining} of ${qty} needed</span>`
           }
         </div>
       </div>
