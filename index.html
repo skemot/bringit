@@ -1982,6 +1982,7 @@ function renderActiveEvents(events) {
       <div style="padding:8px 16px 12px;display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-secondary btn-sm" onclick="copyShareLink('${joinUrl}', this)">🔗 Copy link</button>
         <button class="btn btn-secondary btn-sm" onclick="showQrModal('${joinUrl}', '${event.name}')">📱 QR Code</button>
+        <button class="btn btn-secondary btn-sm" onclick="loadEventForEditing('${event.id}')">✏️ Edit</button>
       </div>
       <div id="detail-${event.id}" style="display:none;border-top:1px solid var(--border);padding:16px;">
         ${renderEventDetail(event)}
@@ -2023,7 +2024,17 @@ function renderEventDetail(event) {
     const taken = signups.length
     const remaining = qty - taken
     const fullyTaken = remaining <= 0
-    const guestNames = signups.map(s => s.guest_name).join(', ') || 'No one yet'
+    
+    //const guestNames = signups.map(s => s.guest_name).join(', ') || 'No one yet'
+    const guestNames = signups.length 
+      ? signups.map(s => `
+          <span style="display:inline-flex;align-items:center;gap:4px;background:var(--cream);border:1px solid var(--border);border-radius:20px;padding:2px 10px;font-size:12px;margin:2px;">
+            ${s.guest_name}
+            <button onclick="removeGuest('${s.id}', '${event.id}')" style="background:none;border:none;cursor:pointer;color:var(--ink-soft);font-size:11px;padding:0;line-height:1;" title="Remove guest">✕</button>
+          </span>`
+        ).join('')
+      : '<span style="color:var(--ink-soft);font-size:12px;">No one yet</span>'
+    
     return `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
         <div>
@@ -2073,6 +2084,185 @@ function useAsTemplate(event) {
 }
 
 
+  async function removeGuest(signupId, eventId) {
+  const confirmed = window.confirm('Remove this guest from the item? They will no longer be signed up.')
+  if (!confirmed) return
+
+  const { error } = await db
+    .from('signups')
+    .delete()
+    .eq('id', signupId)
+
+  if (error) {
+    alert('Error removing guest: ' + error.message)
+    return
+  }
+
+  // Reload dashboard to reflect change
+  loadReportDashboard()
+}
+
+
+
+  async function loadEventForEditing(eventId) {
+  // Fetch full event with items
+  const { data: event, error } = await db
+    .from('events')
+    .select('*, items(*)') 
+    .eq('id', eventId)
+    .single()
+
+  if (error || !event) {
+    alert('Could not load event for editing.')
+    return
+  }
+
+  // Store the event being edited
+  window.editingEventId = eventId
+
+  // Switch to organiser screen
+  showScreen('organiser')
+
+  // Fill in event details
+  document.getElementById('event-name-input').value = event.name || ''
+  document.getElementById('event-date-input').value = event.event_date || ''
+  document.getElementById('event-time-input').value = event.event_time || ''
+  document.getElementById('event-location-input').value = event.location || ''
+  document.getElementById('organiser-email-input').value = event.organiser_email || ''
+  document.getElementById('item-limit-input').value = event.item_limit || 1
+
+  // Clear and repopulate items list
+  const itemsList = document.getElementById('items-list')
+  itemsList.innerHTML = ''
+
+  event.items
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .forEach(item => {
+      const row = document.createElement('div')
+      row.className = 'item-row'
+      row.dataset.itemId = item.id
+      row.dataset.category = item.category || ''
+      row.dataset.servesPrefix = item.serves?.split(' ')[0] || 'Serves'
+
+      const servesText = item.serves || ''
+      const qtyVal = item.quantity || 1
+
+      row.innerHTML = `
+        <span class="item-name" onclick="editItemField(this)" title="Click to edit">🍽️ ${item.name}</span>
+        <span class="item-serves" onclick="editItemField(this)" title="Click to edit">${servesText}</span>
+        <span class="item-qty" onclick="editItemField(this)" title="Click to edit">${qtyVal} available</span>
+        <span class="item-category" onclick="editCategoryField(this)" title="Click to edit" style="font-size:12px;padding:3px 10px;border-radius:20px;background:var(--warm);color:var(--ink-soft);cursor:pointer;">${item.category || 'No category'}</span>
+        <span class="item-status status-open">Open</span>
+        <button class="btn btn-danger" onclick="confirmRemoveItem(this, '${item.id}')">Remove</button>
+      `
+      itemsList.appendChild(row)
+    })
+
+  // Swap Publish button to Save Changes
+  const publishBtn = document.getElementById('publish-btn')
+  publishBtn.textContent = '💾 Save Changes'
+  publishBtn.onclick = saveEventChanges
+
+  // Update page title
+  document.querySelector('#screen-organiser .page-title').textContent = 'Edit Event'
+  document.querySelector('#screen-organiser .page-subtitle').textContent = 'Update your event details and items.'
+}
+
+async function saveEventChanges() {
+  const eventId = window.editingEventId
+  if (!eventId) return
+
+  const name          = document.getElementById('event-name-input').value.trim()
+  const date          = document.getElementById('event-date-input').value
+  const time          = document.getElementById('event-time-input').value
+  const location      = document.getElementById('event-location-input').value.trim()
+  const organiserEmail = document.getElementById('organiser-email-input').value.trim()
+  const itemLimit     = parseInt(document.getElementById('item-limit-input').value)
+
+  if (!name || !date) {
+    alert('Please fill in at least the event name and date.')
+    return
+  }
+
+  const publishBtn = document.getElementById('publish-btn')
+  publishBtn.disabled = true
+  publishBtn.textContent = 'Saving...'
+
+  // Update event details
+  const { error: eventError } = await db
+    .from('events')
+    .update({ name, event_date: date, event_time: time, location, organiser_email: organiserEmail, item_limit: itemLimit })
+    .eq('id', eventId)
+
+  if (eventError) {
+    alert('Error saving event: ' + eventError.message)
+    publishBtn.disabled = false
+    publishBtn.textContent = '💾 Save Changes'
+    return
+  }
+
+  // Save items — upsert existing, insert new
+  const itemRows = document.querySelectorAll('#items-list .item-row')
+  const itemUpdates = []
+  const newItems = []
+
+  itemRows.forEach((row, i) => {
+    const itemId   = row.dataset.itemId
+    const name     = row.querySelector('.item-name')?.textContent.replace(/^[^\w]+/, '').trim()
+    const serves   = row.querySelector('.item-serves')?.textContent.trim()
+    const qty      = parseInt(row.querySelector('.item-qty')?.textContent?.replace(' available', '')) || 1
+    const category = row.dataset.category || null
+
+    if (itemId) {
+      itemUpdates.push({ id: itemId, name, serves, quantity: qty, category, sort_order: i })
+    } else {
+      newItems.push({ event_id: eventId, name, serves, quantity: qty, category, sort_order: i })
+    }
+  })
+
+  // Update existing items
+  for (const item of itemUpdates) {
+    await db.from('items').update(item).eq('id', item.id)
+  }
+
+  // Insert new items
+  if (newItems.length > 0) {
+    await db.from('items').insert(newItems)
+  }
+
+  // Reset back to normal create mode
+  window.editingEventId = null
+  publishBtn.textContent = '🚀 Publish Event'
+  publishBtn.onclick = publishEvent
+  document.querySelector('#screen-organiser .page-title').textContent = 'Create an Event'
+  document.querySelector('#screen-organiser .page-subtitle').textContent = 'Fill in the details, add your items, then share the QR code with your guests.'
+
+  // Go back to report
+  showScreen('report')
+  alert('Event updated successfully! ✅')
+}
+
+async function confirmRemoveItem(btn, itemId) {
+  // Check if anyone has signed up for this item
+  const { data: signups } = await db
+    .from('signups')
+    .select('id')
+    .eq('item_id', itemId)
+
+  if (signups && signups.length > 0) {
+    const confirm = window.confirm(`${signups.length} person(s) have already signed up for this item. Removing it will also remove their signup. Are you sure?`)
+    if (!confirm) return
+    // Delete signups first
+    await db.from('signups').delete().eq('item_id', itemId)
+  }
+
+  // Delete item from database if it exists
+  if (itemId && itemId !== 'undefined') {
+    await db.from('items').delete().eq('id', itemId)
+  }
+
+  btn.closest('.item-row').remove()
+}
 
 
 
@@ -2151,7 +2341,7 @@ function copyLink() {
     <span class="item-qty" onclick="editItemField(this)" title="Click to edit">${qtyVal} available</span>
     <span class="item-category" onclick="editCategoryField(this)" title="Click to edit" style="font-size:12px;padding:3px 10px;border-radius:20px;background:var(--warm);color:var(--ink-soft);cursor:pointer;">${category || 'No category'}</span>
     <span class="item-status status-open">Open</span>
-    <button class="btn btn-danger" onclick="this.closest('.item-row').remove()">Remove</button>
+    <button class="btn btn-danger" onclick="confirmRemoveItem(this, null)">Remove</button>
   `
 
   // reset input fields
