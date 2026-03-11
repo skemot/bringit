@@ -382,6 +382,9 @@ body {
   let selectedItemId = null
   let selectedItemName = null
 
+  let itemLimit = 1
+  let selectedItems = [] // change from single selectedItemId to array
+
   // =============================================
   // LOAD EVENT FROM URL SLUG
   // =============================================
@@ -417,6 +420,7 @@ body {
       }
 
       currentEvent = event
+      itemLimit = currentEvent.item_limit || 1
 
       // Load which items are already taken
       const { data: signups } = await db
@@ -509,6 +513,15 @@ body {
       })
     }
 
+    const limitText = currentEvent.item_limit === 0 
+  ? 'What can you bring? Pick as many as you like:' 
+  : currentEvent.item_limit === 1 
+    ? 'What can you bring? Pick one:' 
+    : `What can you bring? Pick up to ${currentEvent.item_limit}:`
+
+    document.querySelector('.section-label[style*="margin-top:18px"]').textContent = limitText
+    
+    
     // Show the form
     document.getElementById('loading').style.display = 'none'
     document.getElementById('main-form').style.display = 'block'
@@ -518,10 +531,33 @@ body {
   // SELECT ITEM
   // =============================================
   function selectItem(el, item) {
-    document.querySelectorAll('.item.selected').forEach(i => i.classList.remove('selected'))
-    el.classList.add('selected')
-    selectedItemId = item.id
-    selectedItemName = item.name
+    const isSelected = el.classList.contains('selected')
+    
+    if (isSelected) {
+      // Deselect
+      el.classList.remove('selected')
+      el.querySelector('.item-check').textContent = ''
+      selectedItems = selectedItems.filter(i => i.id !== item.id)
+    } else {
+      // Check limit
+      const limit = itemLimit === 0 ? Infinity : itemLimit
+      if (selectedItems.length >= limit) {
+        if (limit === 1) {
+          // Single select — deselect previous
+          document.querySelectorAll('.item.selected').forEach(i => {
+            i.classList.remove('selected')
+            i.querySelector('.item-check').textContent = ''
+          })
+          selectedItems = []
+        } else {
+          alert(`You can only select up to ${itemLimit} items for this event.`)
+          return
+        }
+      }
+      el.classList.add('selected')
+      el.querySelector('.item-check').textContent = '✓'
+      selectedItems.push({ id: item.id, name: item.name })
+    }
   }
 
   // =============================================
@@ -531,45 +567,47 @@ body {
     const name  = document.getElementById('guest-name').value.trim()
     const email = document.getElementById('guest-email').value.trim()
     const btn   = document.getElementById('submit-btn')
-
-    // Validate
+  
     if (!name) {
       document.getElementById('guest-name').style.borderColor = 'var(--rose)'
       document.getElementById('guest-name').focus()
       return
     }
-    if (!selectedItemId) {
-      alert('Please select an item to bring!')
+    if (selectedItems.length === 0) {
+      alert('Please select at least one item to bring!')
       return
     }
-
-    // Disable button while saving
+  
     btn.disabled = true
     btn.textContent = 'Saving...'
-
+  
+    // Insert a signup row for each selected item
+    const signupRows = selectedItems.map(item => ({
+      item_id:     item.id,
+      event_id:    currentEvent.id,
+      guest_name:  name,
+      guest_email: email || null
+    }))
+  
     const { error } = await db
       .from('signups')
-      .insert({
-        item_id:     selectedItemId,
-        event_id:    currentEvent.id,
-        guest_name:  name,
-        guest_email: email || null
-      })
-
+      .insert(signupRows)
+  
     if (error) {
       alert('Something went wrong: ' + error.message)
       btn.disabled = false
       btn.textContent = 'Confirm My Selection ✓'
       return
     }
-
+  
     // Show success
+    const itemNames = selectedItems.map(i => i.name).join(' and ')
     const emailMsg = email ? `A reminder will be sent to ${email} before the event.` : `We'll see you soon!`
     document.getElementById('success-sub').innerHTML = `Thanks for signing up, ${name}!<br>${emailMsg}`
-    document.getElementById('success-item').textContent = selectedItemName
+    document.getElementById('success-item').textContent = itemNames
     document.getElementById('success-detail').textContent = 
       document.getElementById('event-chip').textContent.replace('📅 ', '')
-
+  
     document.getElementById('main-form').style.display = 'none'
     document.getElementById('success-state').style.display = 'block'
   }
