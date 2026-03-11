@@ -2110,7 +2110,7 @@ function useAsTemplate(event) {
   // Fetch full event with items
   const { data: event, error } = await db
     .from('events')
-    .select('*, items(*)') 
+    .select('*, items(*), signups(id, item_id)')
     .eq('id', eventId)
     .single()
 
@@ -2154,7 +2154,15 @@ function useAsTemplate(event) {
         <span class="item-serves" onclick="editItemField(this)" title="Click to edit">${servesText}</span>
         <span class="item-qty" onclick="editItemField(this)" title="Click to edit">${qtyVal} available</span>
         <span class="item-category" onclick="editCategoryField(this)" title="Click to edit" style="font-size:12px;padding:3px 10px;border-radius:20px;background:var(--warm);color:var(--ink-soft);cursor:pointer;">${item.category || 'No category'}</span>
-        <span class="item-status status-open">Open</span>
+        ${(() => {
+          const qty = item.quantity || 1
+          const taken = event.signups?.filter(s => s.item_id === item.id).length || 0
+          const remaining = qty - taken
+          if (taken >= qty) return `<span class="item-status status-taken">✓ Taken</span>`
+          if (qty === 1) return `<span class="item-status status-open">1 needed</span>`
+          if (taken === 0) return `<span class="item-status" style="background:var(--rose-pale);color:var(--rose);">${remaining} of ${qty} needed</span>`
+          return `<span class="item-status" style="background:var(--amber-pale);color:var(--amber);">${remaining} of ${qty} needed</span>`
+        })()}
         <button class="btn btn-danger" onclick="confirmRemoveItem(this, '${item.id}')">Remove</button>
       `
       itemsList.appendChild(row)
