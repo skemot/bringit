@@ -1326,7 +1326,10 @@ tr:hover td { background: var(--cream); }
         <option value="">No label</option>
       </select>
       
-      <input id="item-qty-input" type="number" min="1" value="1" placeholder="Qty" style="width:70px;" class="input-field" />
+      <!-- <input id="item-qty-input" type="number" min="1" value="1" placeholder="Qty" style="width:70px;" class="input-field" /> -->
+      <input id="item-qty-input" type="number" min="1" value="1" placeholder="How many available?" style="width:160px;" class="input-field" />
+
+      
       <select id="item-category-input" style="min-width:130px;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--cream);color:var(--ink);outline:none;cursor:pointer;">
       <!-- <select id="item-category-input" class="input-field" style="min-width:120px;"> -->
         <option value="">No category</option>
@@ -2139,7 +2142,7 @@ function copyLink() {
   row.innerHTML = `
     <span class="item-name" onclick="editItemField(this)" title="Click to edit">🍽️ ${name.value.trim()}</span>
     <span class="item-serves" onclick="editItemField(this)" title="Click to edit">${servesText}</span>
-    <span class="item-qty" onclick="editItemField(this)" title="Click to edit">×${qtyVal}</span>
+    <span class="item-qty" onclick="editItemField(this)" title="Click to edit">${qtyVal} available</span>
     <span class="item-category" onclick="editCategoryField(this)" title="Click to edit" style="font-size:12px;padding:3px 10px;border-radius:20px;background:var(--warm);color:var(--ink-soft);cursor:pointer;">${category || 'No category'}</span>
     <span class="item-status status-open">Open</span>
     <button class="btn btn-danger" onclick="this.closest('.item-row').remove()">Remove</button>
@@ -2161,7 +2164,7 @@ function editItemField(el) {
 
   let displayValue
   if (isName) displayValue = original.replace(/^[^\w]+/, '').trim()
-  else if (isQty) displayValue = original.replace('×', '').trim()
+  else if (isQty) displayValue = original.replace(' available', '').trim()
   else displayValue = original.replace(/^Serves\s*/i, '').trim()
 
   el.innerHTML = `<input 
@@ -2186,7 +2189,7 @@ function saveItemField(input, type) {
     el.textContent = value ? '🍽️ ' + value : '🍽️ Unnamed item'
   } else if (type === 'qty') {
     const n = parseInt(value) || 1
-    el.textContent = '×' + n
+    el.textContent = n + ' available'
   } else {
     const prefix = el.closest('.item-row')?.dataset.servesPrefix || 'Serves'
     el.textContent = value ? (prefix ? prefix + ' ' + value : value) : ''
