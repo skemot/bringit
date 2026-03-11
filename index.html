@@ -1273,23 +1273,25 @@ tr:hover td { background: var(--cream); }
   <div class="card">
     <div class="card-title">🗓️ Event Details</div>
     <div class="form-row">
+      
       <div class="form-group">
         <label>Event Name</label>
-        <input type="text" placeholder="e.g. Spring Potluck, Team BBQ, School Bake Sale" />
+        <input type="text" id="event-name-input" placeholder="e.g. Spring Potluck, Team BBQ, School Bake Sale" />
       </div>
       <div class="form-group" style="max-width:170px">
         <label>Date</label>
-        <input type="date" />
+        <input type="date" id="event-date-input" />
       </div>
       <div class="form-group" style="max-width:130px">
         <label>Time</label>
-        <input type="time" />
+        <input type="time" id="event-time-input" />
       </div>
+      
     </div>
     <div class="form-row">
       <div class="form-group">
         <label>Location / Venue</label>
-        <input type="text" placeholder="e.g. 42 Oak Street, Community Hall" />
+        <input type="text" id="event-location-input" placeholder="e.g. 42 Oak Street, Community Hall" />
       </div>
       <div class="form-group">
         <label>Your Email (for notifications)</label>
