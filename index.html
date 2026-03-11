@@ -1330,10 +1330,10 @@ tr:hover td { background: var(--cream); }
       <input id="item-qty-input" type="number" min="1" value="1" placeholder="How many available?" style="width:160px;" class="input-field" /> -->
 
 
-      <label style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--ink);">
-        How many available?
-        <input id="item-qty-input" type="number" min="1" value="1" style="width:60px;padding:10px 8px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--cream);text-align:center;outline:none;" />
-      </label>
+<div style="display:flex;align-items:center;border:1.5px solid var(--border);border-radius:10px;background:var(--cream);overflow:hidden;">
+  <span style="padding:10px 12px;font-size:13px;color:var(--ink-soft);border-right:1.5px solid var(--border);white-space:nowrap;">How many?</span>
+  <input id="item-qty-input" type="number" min="1" value="1" style="width:55px;padding:10px 8px;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:14px;text-align:center;outline:none;" />
+</div>
 
       
       <select id="item-category-input" style="min-width:130px;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--cream);color:var(--ink);outline:none;cursor:pointer;">
