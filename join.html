@@ -420,7 +420,7 @@ body {
       }
 
       currentEvent = event
-      itemLimit = currentEvent.item_limit || 1
+      itemLimit = currentEvent.item_limit || 3
 
       // Load which items are already taken
       const { data: signups } = await db
