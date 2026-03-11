@@ -1401,7 +1401,7 @@ tr:hover td { background: var(--cream); }
       <div class="qr-box"><div id="qr-code-container"></div></div>
       <div class="qr-info">
         <div class="qr-link">
-          <span id="share-link">bringit.app/join/spring-potluck-2025</span>
+          <span id="share-link"></span>
           <button class="copy-btn" id="copy-btn" onclick="copyLink()">Copy</button>
         </div>
         <div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px;">Guests scan with any phone camera — no app or login needed. They see your list and pick what to bring.</div>
@@ -2116,25 +2116,13 @@ function useAsTemplate(event) {
     });
   });
 
-  function copyLink() {
-    const link = document.getElementById('share-link').textContent;
-    const btn = document.getElementById('copy-btn');
-    navigator.clipboard.writeText('https://' + link).then(() => {
-      btn.textContent = '✓ Copied!';
-      btn.style.background = 'var(--green)';
-      btn.style.color = 'white';
-      setTimeout(() => { btn.textContent = 'Copy'; btn.style.background = ''; btn.style.color = ''; }, 2500);
-    }).catch(() => {
-      const el = document.createElement('textarea');
-      el.value = 'https://' + link;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand('copy');
-      document.body.removeChild(el);
-      btn.textContent = '✓ Copied!';
-      setTimeout(() => btn.textContent = 'Copy', 2500);
-    });
-  }
+function copyLink() {
+  const link = document.getElementById('share-link').textContent.trim()
+  navigator.clipboard.writeText(link)
+  const btn = document.getElementById('copy-btn')
+  btn.textContent = '✓ Copied!'
+  setTimeout(() => btn.textContent = 'Copy', 2000)
+}
 
   function downloadQR() {
     const canvas = document.querySelector('#qr-code-container canvas');
