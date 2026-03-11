@@ -1295,6 +1295,17 @@ tr:hover td { background: var(--cream); }
         <label>Your Email (for notifications)</label>
         <input type="email" id="organiser-email-input" placeholder="organiser@email.com" />
       </div>
+
+      <div class="form-group">
+        <label>How many items can each guest bring?</label>
+        <select id="item-limit-input" style="width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--cream);color:var(--ink);outline:none;">
+          <option value="1">1 item per guest</option>
+          <option value="2">2 items per guest</option>
+          <option value="3">3 items per guest</option>
+          <option value="0">Unlimited</option>
+        </select>
+      </div>
+      
     </div>
   </div>
 
@@ -2274,20 +2285,27 @@ function saveCategoryField(select) {
   console.log('Slug:', slug)
   console.log('Supabase client:', db)
 
-const result = await db
-  .from('events')
-  .insert({ 
-    name, 
-    event_date: date, 
-    event_time: time,
-    location,
-    organiser_email: organiserEmail,
-    organiser_id: currentUser?.id || null,
-    slug, 
-    is_active: true 
-  })
-  .select()
-  .single()
+    
+  
+  const itemLimit = parseInt(document.getElementById('item-limit-input').value)
+  
+  const result = await db
+    .from('events')
+    .insert({ 
+      name, 
+      event_date: date, 
+      event_time: time,
+      location,
+      organiser_email: organiserEmail,
+      organiser_id: currentUser?.id || null,
+      slug, 
+      item_limit: itemLimit,
+      is_active: true 
+    })
+    .select()
+    .single()
+
+    
 
   console.log('Full result:', JSON.stringify(result))
 
