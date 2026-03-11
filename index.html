@@ -1318,6 +1318,14 @@ tr:hover td { background: var(--cream); }
     <div class="add-row">
       <input type="text" id="item-name-input" placeholder="Item name (e.g. Potato Salad)" />
       <input type="text" id="item-serves-input" placeholder="Serves / qty (e.g. 8)" />
+
+      <input type="text" id="item-serves-input" placeholder="Amount (e.g. 8)" style="width:100px;" />
+      <select id="item-serves-prefix" style="padding:10px 8px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--cream);color:var(--ink);outline:none;">
+        <option value="Serves">Serves</option>
+        <option value="Qty">Qty</option>
+        <option value="">No label</option>
+      </select>
+      
       <input id="item-qty-input" type="number" min="1" value="1" placeholder="Qty" style="width:70px;" class="input-field" />
       <select id="item-category-input" style="min-width:130px;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--cream);color:var(--ink);outline:none;cursor:pointer;">
       <!-- <select id="item-category-input" class="input-field" style="min-width:120px;"> -->
@@ -2117,13 +2125,17 @@ function copyLink() {
   const qty    = document.getElementById('item-qty-input')
   if (!name.value.trim()) { name.focus(); return; }
 
-  const servesText = serves.value.trim() ? 'Serves ' + serves.value.trim() : 'Qty TBC'
+  const prefix = document.getElementById('item-serves-prefix').value
+  const servesText = serves.value.trim() 
+    ? (prefix ? prefix + ' ' + serves.value.trim() : serves.value.trim())
+    : ''
   const qtyVal = parseInt(qty?.value) || 1
   const category = document.getElementById('item-category-input').value
 
   const row = document.createElement('div')
   row.className = 'item-row'
   row.dataset.category = category
+  row.dataset.servesPrefix = prefix
   row.innerHTML = `
     <span class="item-name" onclick="editItemField(this)" title="Click to edit">🍽️ ${name.value.trim()}</span>
     <span class="item-serves" onclick="editItemField(this)" title="Click to edit">${servesText}</span>
@@ -2132,10 +2144,12 @@ function copyLink() {
     <span class="item-status status-open">Open</span>
     <button class="btn btn-danger" onclick="this.closest('.item-row').remove()">Remove</button>
   `
-    
+
+  // reset input fields
   document.getElementById('items-list').appendChild(row)
   name.value = ''; serves.value = ''; if (qty) qty.value = '1';
   document.getElementById('item-category-input').value = ''
+  document.getElementById('item-serves-prefix').value = 'Serves'
 }
 
 function editItemField(el) {
@@ -2174,7 +2188,8 @@ function saveItemField(input, type) {
     const n = parseInt(value) || 1
     el.textContent = '×' + n
   } else {
-    el.textContent = value ? 'Serves ' + value : 'Qty TBC'
+    const prefix = el.closest('.item-row')?.dataset.servesPrefix || 'Serves'
+    el.textContent = value ? (prefix ? prefix + ' ' + value : value) : ''
   }
 
   el.onclick = () => editItemField(el)
