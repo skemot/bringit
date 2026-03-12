@@ -1963,11 +1963,11 @@ function renderActiveEvents(events) {
         </div>
         <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
           <div style="text-align:center;">
-            <div style="font-size:18px;font-weight:700;color:var(--green)">${takenItems}/${totalItems}</div>
+            <div class="items-count" style="font-size:18px;font-weight:700;color:var(--green)">${takenItems}/${totalItems}</div>
             <div style="font-size:11px;color:var(--ink-soft);">items claimed</div>
           </div>
           <div style="text-align:center;">
-            <div style="font-size:18px;font-weight:700;color:var(--blue)">${totalGuests}</div>
+            <div class="guests-count" style="font-size:18px;font-weight:700;color:var(--blue)">${totalGuests}</div>
             <div style="font-size:11px;color:var(--ink-soft);">guests</div>
           </div>
           <div style="font-size:20px;transition:transform 0.2s;" class="expand-arrow">▾</div>
@@ -1975,10 +1975,10 @@ function renderActiveEvents(events) {
       </div>
       <div style="padding:0 16px 4px;">
         <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-soft);margin-bottom:4px;">
-          <span>Progress</span><span style="font-weight:600;color:var(--green)">${pct}%</span>
+          <span>Progress</span><span class="progress-pct" style="font-weight:600;color:var(--green)">${pct}%</span>
         </div>
         <div style="background:var(--border);border-radius:99px;height:6px;">
-          <div style="background:var(--green);border-radius:99px;height:6px;width:${pct}%;transition:width 0.5s;"></div>
+          <div class="progress-bar" style="background:var(--green);border-radius:99px;height:6px;width:${pct}%;transition:width 0.5s;"></div>
         </div>
       </div>
       <div style="padding:8px 16px 12px;display:flex;gap:8px;flex-wrap:wrap;">
