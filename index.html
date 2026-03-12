@@ -2281,6 +2281,7 @@ function useAsTemplate(event) {
 
 
 async function removeGuest(signupId, eventId) {
+  console.log('removeGuest called:', signupId, eventId)
   const confirmed = window.confirm('Remove this guest from the item? They will no longer be signed up.')
   if (!confirmed) return
 
