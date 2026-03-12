@@ -1984,10 +1984,108 @@ function renderActiveEvents(events) {
       <div style="padding:8px 16px 12px;display:flex;gap:8px;flex-wrap:wrap;">
         <button class="btn btn-secondary btn-sm" onclick="copyShareLink('${joinUrl}', this)">🔗 Copy link</button>
         <button class="btn btn-secondary btn-sm" onclick="showQrModal('${joinUrl}', '${event.name}')">📱 QR Code</button>
-        <button class="btn btn-secondary btn-sm" onclick="loadEventForEditing('${event.id}')">✏️ Edit</button>
+        <button class="btn btn-secondary btn-sm" onclick="toggleEditPanel('${event.id}', event)">✏️ Edit</button>
       </div>
       <div id="detail-${event.id}" style="display:none;border-top:1px solid var(--border);padding:16px;">
         ${renderEventDetail(event)}
+      </div>
+      <div id="edit-${event.id}" style="display:none;border-top:1px solid var(--border);padding:20px;">
+        <div style="font-weight:700;font-size:15px;margin-bottom:16px;">✏️ Edit Event</div>
+        
+        <!-- Event details -->
+        <div style="display:grid;grid-template-columns:1fr 160px 130px;gap:12px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);">Event Name</label>
+            <input id="edit-name-${event.id}" type="text" value="${event.name}" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;margin-top:4px;box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);">Date</label>
+            <input id="edit-date-${event.id}" type="date" value="${event.event_date}" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;margin-top:4px;box-sizing:border-box;" />
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);">Time</label>
+            <input id="edit-time-${event.id}" type="time" value="${event.event_time || ''}" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;margin-top:4px;box-sizing:border-box;" />
+          </div>
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);">Location</label>
+          <input id="edit-location-${event.id}" type="text" value="${event.location || ''}" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;margin-top:4px;box-sizing:border-box;" />
+        </div>
+      
+        <!-- Items list -->
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);margin-bottom:8px;">Items</div>
+        <div id="edit-items-${event.id}" style="margin-bottom:12px;">
+          ${event.items?.sort((a,b) => a.sort_order - b.sort_order).map(item => {
+            const qty = item.quantity || 1
+            const taken = event.signups?.filter(s => s.item_id === item.id).length || 0
+            const isTaken = taken > 0
+            const remaining = qty - taken
+            const statusBadge = taken >= qty
+              ? `<span style="background:var(--green-pale);color:var(--green);padding:2px 8px;border-radius:20px;font-size:11px;">✓ Taken</span>`
+              : qty === 1
+                ? `<span style="background:var(--rose-pale);color:var(--rose);padding:2px 8px;border-radius:20px;font-size:11px;">1 needed</span>`
+                : taken === 0
+                  ? `<span style="background:var(--rose-pale);color:var(--rose);padding:2px 8px;border-radius:20px;font-size:11px;">${remaining} of ${qty} needed</span>`
+                  : `<span style="background:var(--amber-pale);color:var(--amber);padding:2px 8px;border-radius:20px;font-size:11px;">${remaining} of ${qty} needed</span>`
+      
+            return `
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);" data-item-id="${item.id}">
+                <div style="flex:1;font-size:14px;font-weight:600;${isTaken ? 'opacity:0.6;' : ''}">${item.name}</div>
+                <div style="font-size:13px;color:var(--ink-soft);${isTaken ? 'opacity:0.6;' : ''}">${item.serves || ''}</div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <label style="font-size:12px;color:var(--ink-soft);">Qty:</label>
+                  <input 
+                    type="number" 
+                    min="${taken}" 
+                    value="${qty}" 
+                    data-item-id="${item.id}"
+                    data-taken="${taken}"
+                    oninput="if(parseInt(this.value) < ${taken}) this.value = ${taken}"
+                    style="width:55px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;text-align:center;"
+                    class="edit-qty-input"
+                  />
+                </div>
+                ${statusBadge}
+                ${!isTaken 
+                  ? `<button onclick="removeEditItem(this, '${item.id}', '${event.id}')" style="background:none;border:1px solid var(--rose);color:var(--rose);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;">Remove</button>`
+                  : `<button disabled style="background:none;border:1px solid var(--border);color:var(--border);border-radius:8px;padding:4px 10px;font-size:12px;cursor:not-allowed;">Remove</button>`
+                }
+              </div>
+            `
+          }).join('') || '<div style="color:var(--ink-soft);font-size:13px;">No items yet</div>'}
+        </div>
+      
+        <!-- Add new item row -->
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 0;border-top:1px solid var(--border);margin-bottom:16px;">
+          <input type="text" placeholder="Item name" id="edit-new-name-${event.id}" style="flex:1;min-width:140px;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;" />
+          <input type="text" placeholder="Serves / qty" id="edit-new-serves-${event.id}" style="width:110px;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;" />
+          <select id="edit-new-prefix-${event.id}" style="padding:9px 8px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--cream);">
+            <option value="Serves">Serves</option>
+            <option value="Qty">Qty</option>
+            <option value="">No label</option>
+          </select>
+          <div style="display:flex;align-items:center;border:1.5px solid var(--border);border-radius:10px;background:var(--cream);overflow:hidden;">
+            <span style="padding:9px 10px;font-size:12px;color:var(--ink-soft);border-right:1.5px solid var(--border);white-space:nowrap;">How many?</span>
+            <input type="number" min="1" value="1" id="edit-new-qty-${event.id}" style="width:50px;padding:9px 6px;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;text-align:center;outline:none;" />
+          </div>
+          <select id="edit-new-category-${event.id}" style="padding:9px 8px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--cream);">
+            <option value="">No category</option>
+            <option value="Mains">🍗 Mains</option>
+            <option value="Salads">🥗 Salads</option>
+            <option value="Bread">🍞 Bread</option>
+            <option value="Desserts">🍰 Desserts</option>
+            <option value="Drinks">🥤 Drinks</option>
+            <option value="Snacks">🧀 Snacks</option>
+            <option value="Other">📦 Other</option>
+          </select>
+          <button onclick="addEditItem('${event.id}')" style="padding:9px 16px;background:var(--green);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">+ Add</button>
+        </div>
+      
+        <!-- Save / Cancel -->
+        <div style="display:flex;gap:10px;">
+          <button onclick="saveEditChanges('${event.id}')" class="btn btn-primary">💾 Save Changes</button>
+          <button onclick="toggleEditPanel('${event.id}')" class="btn btn-secondary">Cancel</button>
+        </div>
       </div>
     `
     container.appendChild(card)
@@ -2059,6 +2157,102 @@ function renderEventDetail(event) {
 
   return `<div>${itemRows}</div>`
 }
+
+  
+  function toggleEditPanel(eventId) {
+  const panel = document.getElementById(`edit-${eventId}`)
+  const isOpen = panel.style.display !== 'none'
+  panel.style.display = isOpen ? 'none' : 'block'
+}
+
+async function removeEditItem(btn, itemId, eventId) {
+  const confirmed = window.confirm('Remove this item from the event?')
+  if (!confirmed) return
+
+  const { error } = await db.from('items').delete().eq('id', itemId)
+  if (error) { alert('Error removing item: ' + error.message); return }
+
+  btn.closest('[data-item-id]').remove()
+}
+
+async function addEditItem(eventId) {
+  const nameEl     = document.getElementById(`edit-new-name-${eventId}`)
+  const servesEl   = document.getElementById(`edit-new-serves-${eventId}`)
+  const prefixEl   = document.getElementById(`edit-new-prefix-${eventId}`)
+  const qtyEl      = document.getElementById(`edit-new-qty-${eventId}`)
+  const categoryEl = document.getElementById(`edit-new-category-${eventId}`)
+
+  const name     = nameEl.value.trim()
+  const prefix   = prefixEl.value
+  const serves   = servesEl.value.trim() ? (prefix ? prefix + ' ' + servesEl.value.trim() : servesEl.value.trim()) : ''
+  const qty      = parseInt(qtyEl.value) || 1
+  const category = categoryEl.value || null
+
+  if (!name) { nameEl.focus(); return }
+
+  const { data: item, error } = await db
+    .from('items')
+    .insert({ event_id: eventId, name, serves, quantity: qty, category, sort_order: 999 })
+    .select()
+    .single()
+
+  if (error) { alert('Error adding item: ' + error.message); return }
+
+  // Add to the items list in the edit panel
+  const itemsList = document.getElementById(`edit-items-${eventId}`)
+  const row = document.createElement('div')
+  row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);'
+  row.dataset.itemId = item.id
+  row.innerHTML = `
+    <div style="flex:1;font-size:14px;font-weight:600;">${name}</div>
+    <div style="font-size:13px;color:var(--ink-soft);">${serves}</div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <label style="font-size:12px;color:var(--ink-soft);">Qty:</label>
+      <input type="number" min="1" value="${qty}" data-item-id="${item.id}" data-taken="0"
+        style="width:55px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;text-align:center;"
+        class="edit-qty-input" />
+    </div>
+    <span style="background:var(--rose-pale);color:var(--rose);padding:2px 8px;border-radius:20px;font-size:11px;">1 needed</span>
+    <button onclick="removeEditItem(this, '${item.id}', '${eventId}')" style="background:none;border:1px solid var(--rose);color:var(--rose);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;">Remove</button>
+  `
+  itemsList.appendChild(row)
+
+  // Reset inputs
+  nameEl.value = ''; servesEl.value = ''; qtyEl.value = '1'; categoryEl.value = ''
+}
+
+async function saveEditChanges(eventId) {
+  const name     = document.getElementById(`edit-name-${eventId}`).value.trim()
+  const date     = document.getElementById(`edit-date-${eventId}`).value
+  const time     = document.getElementById(`edit-time-${eventId}`).value
+  const location = document.getElementById(`edit-location-${eventId}`).value.trim()
+
+  if (!name || !date) { alert('Please fill in event name and date.'); return }
+
+  // Update event details
+  const { error: eventError } = await db
+    .from('events')
+    .update({ name, event_date: date, event_time: time, location })
+    .eq('id', eventId)
+
+  if (eventError) { alert('Error saving event: ' + eventError.message); return }
+
+  // Update item quantities
+  const qtyInputs = document.querySelectorAll(`#edit-items-${eventId} .edit-qty-input`)
+  for (const input of qtyInputs) {
+    const itemId = input.dataset.itemId
+    const taken  = parseInt(input.dataset.taken) || 0
+    const qty    = Math.max(parseInt(input.value) || 1, taken)
+    await db.from('items').update({ quantity: qty }).eq('id', itemId)
+  }
+
+  // Close panel and reload dashboard
+  toggleEditPanel(eventId)
+  loadReportDashboard()
+}
+
+
+  
 
 function toggleEventDetail(id, header) {
   const detail = document.getElementById(id)
