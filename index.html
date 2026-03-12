@@ -2290,12 +2290,14 @@ async function removeGuest(signupId, eventId) {
     .delete()
     .eq('id', signupId)
 
-  console.log('delete result:', data, error)
+  //console.log('delete result:', data, error)
 
   if (error) {
     alert('Error removing guest: ' + error.message)
     return
   }
+
+  console.log('delete error:', error)
 
   // Refresh just this event's detail panel without collapsing anything
   refreshEventCard(eventId)
