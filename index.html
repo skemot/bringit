@@ -2298,6 +2298,7 @@ async function removeGuest(signupId, eventId) {
   }
 
   console.log('delete error:', error)
+  console.log('calling refreshEventCard with:', eventId)
 
   // Refresh just this event's detail panel without collapsing anything
   refreshEventCard(eventId)
