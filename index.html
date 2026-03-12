@@ -2314,6 +2314,7 @@ async function removeGuest(signupId, eventId) {
     .single()
 
     console.log('event fetched:', event)
+    console.log('signups after delete:', event.signups)
 
   if (!event) return
 
