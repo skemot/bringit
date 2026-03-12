@@ -2290,6 +2290,8 @@ async function removeGuest(signupId, eventId) {
     .delete()
     .eq('id', signupId)
 
+  console.log('delete result:', data, error)
+
   if (error) {
     alert('Error removing guest: ' + error.message)
     return
