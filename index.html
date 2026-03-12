@@ -2306,11 +2306,14 @@ async function removeGuest(signupId, eventId) {
 
 
   async function refreshEventCard(eventId) {
+      console.log('refreshEventCard started:', eventId)
   const { data: event } = await db
     .from('events')
     .select('*, items(id, name, serves, quantity, category), signups(id, item_id, guest_name, guest_email)')
     .eq('id', eventId)
     .single()
+
+    console.log('event fetched:', event)
 
   if (!event) return
 
