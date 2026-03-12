@@ -2281,7 +2281,6 @@ function useAsTemplate(event) {
 
 
 async function removeGuest(signupId, eventId) {
-  console.log('removeGuest called:', signupId, eventId)
   const confirmed = window.confirm('Remove this guest from the item? They will no longer be signed up.')
   if (!confirmed) return
 
@@ -2297,8 +2296,7 @@ async function removeGuest(signupId, eventId) {
     return
   }
 
-  console.log('delete error:', error)
-  console.log('calling refreshEventCard with:', eventId)
+
 
   // Refresh just this event's detail panel without collapsing anything
   refreshEventCard(eventId)
@@ -2306,15 +2304,12 @@ async function removeGuest(signupId, eventId) {
 
 
   async function refreshEventCard(eventId) {
-      console.log('refreshEventCard started:', eventId)
   const { data: event } = await db
     .from('events')
     .select('*, items(id, name, serves, quantity, category), signups(id, item_id, guest_name, guest_email)')
     .eq('id', eventId)
     .single()
 
-    console.log('event fetched:', event)
-    console.log('signups after delete:', event.signups)
 
   if (!event) return
 
