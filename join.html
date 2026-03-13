@@ -325,6 +325,8 @@ body {
       <div class="event-chip" id="event-chip">📅 Loading...</div>
     </div>
 
+    <button onclick="location.reload()" style="display:flex;align-items:center;gap:6px;background:none;border:1.5px solid var(--border);border-radius:20px;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-soft);cursor:pointer;margin:8px auto 0;">🔄 Refresh availability</button>
+
     <div class="body">
       <div class="section-label">Your details</div>
       <div class="name-card">
@@ -433,9 +435,28 @@ body {
       // Render the page
       renderEvent(event, takenIds, signups || [])
 
+
+      // Auto-refresh availability every 30 seconds
+setInterval(async () => {
+  if (selectedItems.length > 0) return // don't refresh if guest is mid-selection
+
+  const { data: freshSignups } = await db
+    .from('signups')
+    .select('id, item_id')
+    .eq('event_id', currentEvent.id)
+
+  if (freshSignups) {
+    renderEvent(currentEvent, freshSignups.map(s => s.item_id), freshSignups)
+  }
+}, 30000)
+
+      
+
     } catch (e) {
       showError()
     }
+
+    
   }
 
   // =============================================
