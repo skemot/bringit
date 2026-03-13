@@ -430,6 +430,8 @@ body {
         .select('item_id')
         .eq('event_id', event.id)
 
+      alert('Signups found: ' + (signups?.length || 0))
+
       const takenIds = new Set(signups?.map(s => s.item_id) || [])
 
       // Render the page
